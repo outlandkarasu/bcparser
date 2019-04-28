@@ -7,7 +7,7 @@ version(D_BetterC)
     */
     extern(C) void main()
     {
-        foreach(u; __traits(getUnitTests, __traits(parent, main)))
+        static foreach(u; __traits(getUnitTests, __traits(parent, main)))
         {
             u();
         }
