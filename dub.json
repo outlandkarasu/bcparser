@@ -6,5 +6,6 @@
 	"description": "betterC parser combinator.",
 	"copyright": "Copyright © 2019, outland.karasu@gmail.com",
 	"license": "BSL-1.0",
+        "targetType": "library",
         "dflags": ["-betterC"]
 }
