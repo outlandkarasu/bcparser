@@ -2,6 +2,7 @@
 docs.json
 __dummy.html
 docs/
+/bcparser
 bcparser.so
 bcparser.dylib
 bcparser.dll
