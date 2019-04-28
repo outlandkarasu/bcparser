@@ -7,5 +7,14 @@
 	"copyright": "Copyright © 2019, outland.karasu@gmail.com",
 	"license": "BSL-1.0",
         "targetType": "library",
-        "dflags": ["-betterC"]
+        "configurations": [
+            {
+                "name": "default"
+            },
+            {
+                "name": "bc",
+                "targetType": "executable",
+                "dflags": ["-betterC"]
+            }
+        ]
 }
