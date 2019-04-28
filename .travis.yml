@@ -3,7 +3,7 @@ sudo: false
 d:
   - dmd
   - ldc
-  - gdc
+#  - gdc # not yet supported.
 
 script:
   - dub test -b unittest-cov --compiler=${DC}
