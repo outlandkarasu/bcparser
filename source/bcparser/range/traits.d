@@ -1,4 +1,4 @@
-module bcparser.range;
+module bcparser.range.traits;
 
 import std.range :
     isForwardRange,
@@ -114,86 +114,5 @@ enum bool isBetterCForwardRange(R) =
         }
         static assert(!isBetterCForwardRange!EmptyNoBCRange);
     }
-}
-
-/**
-BetterC array range.
-
-Params:
-    E = element type.
-*/
-@nogc nothrow @safe
-struct BetterCArrayRange(E)
-{
-    /**
-    get front element.
-
-    Returns:
-        front element.
-    */
-    @property pure E front() const
-    in
-    {
-        assert(!this.empty);
-    }
-    body
-    {
-        return array_[0];
-    }
-
-    @property pure typeof(this) save()
-    {
-        return typeof(this)(array_);
-    }
-
-    pure void popFront()
-    in
-    {
-        assert(!this.empty);
-    }
-    body
-    {
-        array_ = array_[1 .. $];
-    }
-
-    @property pure bool empty() const
-    {
-        return array_.length == 0;
-    }
-
-private:
-    E[] array_;
-}
-
-///
-@nogc @safe unittest
-{
-    import std.algorithm : equal;
-
-    ubyte[4] a = [0, 1, 2, 3];
-    auto r = BetterCArrayRange!ubyte(a);
-    assert(r.equal(a[]));
-    assert(r.front == 0);
-    assert(!r.empty);
-    assert(r.save.array_ == a);
-}
-
-@nogc @safe unittest
-{
-    import std.algorithm : equal;
-
-    ubyte[4] a = [0, 1, 2, 3];
-    auto r = BetterCArrayRange!ubyte(a);
-    auto saved = r.save;
-    r.popFront();
-    assert(r.equal(a[1 .. $]));
-    assert(saved.equal(a[]));
-
-    r.popFront();
-    assert(r.equal(a[2 .. $]));
-    r.popFront();
-    assert(r.equal(a[3 .. $]));
-    r.popFront();
-    assert(r.empty);
 }
 
