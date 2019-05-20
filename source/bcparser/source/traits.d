@@ -1,4 +1,4 @@
-module bcparser.source;
+module bcparser.source.traits;
 
 import std.traits :
     isCopyable,
