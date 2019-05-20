@@ -1,77 +1,97 @@
 module bcparser.source;
 
-import std.traits : isCopyable, ReturnType;
-
-/**
-Source operation result.
-*/
-enum SourceResult: bool
-{
-    failed = false,
-    success = true,
-}
+import std.traits :
+    isCopyable,
+    Parameters,
+    ParameterStorageClass,
+    ParameterStorageClassTuple,
+    ReturnType
+;
 
 /**
 Source interface.
 */
 enum bool isSource(S) =
     is(typeof(S.init) == S)
-    && isCopyable!S
-    && is(ReturnType!((S s) @nogc nothrow pure @safe => s.empty) == bool)
-    && is(typeof((return ref S s) @nogc nothrow pure @safe  => s.front))
-    && !is(ReturnType!((S s) @nogc nothrow pure @safe => s.front) == void)
-    && is(typeof((S s) @nogc nothrow pure @safe => s.popFront))
-    && is(typeof((S s) @nogc nothrow pure @safe => s.begin))
-    && is(ReturnType!((S s) @nogc nothrow pure @safe => s.begin) == SourceResult)
-    && is(typeof((S s) @nogc nothrow pure @safe => s.accept))
-    && is(typeof((S s) @nogc nothrow pure @safe => s.backtrack))
-    && is(ReturnType!((S s) @nogc nothrow pure @safe => s.backtrack) == SourceResult);
+    && is(typeof((return ref S s) @nogc nothrow pure @safe
+        {
+            // get next element.
+            alias E = Parameters!(s.next)[0];
+            E c;
+            bool result = s.next(c);
+
+            // next function has an element out parameter.
+            static assert(ParameterStorageClassTuple!(typeof(s.next))[0]
+                & ParameterStorageClass.out_);
+
+            // get current position.
+            auto position = s.position;
+            static assert(isCopyable!(typeof(position)));
+
+            // move to saved position.
+            s.moveTo(position);
+        }));
 
 ///
 @nogc nothrow pure @safe unittest
 {
     struct Source
     {
-        @property bool empty() @nogc nothrow pure @safe;
-        @property int front() @nogc nothrow pure @safe;
-        void popFront() @nogc nothrow pure @safe;
-        SourceResult begin() @nogc nothrow pure @safe;
-        void accept() @nogc nothrow pure @safe;
-        SourceResult backtrack() @nogc nothrow pure @safe;
+        bool next(out int e) @nogc nothrow pure @safe;
+        @property size_t position() const @nogc nothrow pure @safe;
+        void moveTo(size_t position) @nogc nothrow pure @safe;
     }
     static assert(isSource!Source);
 
-    struct HaveNotEmpty 
+    struct NotSource
     {
-        //@property bool empty() @nogc nothrow pure @safe;
-        @property int front() @nogc nothrow pure @safe;
-        void popFront() @nogc nothrow pure @safe;
-        SourceResult begin() @nogc nothrow pure @safe;
-        void accept() @nogc nothrow pure @safe;
-        SourceResult backtrack() @nogc nothrow pure @safe;
+        //bool next(out int e) @nogc nothrow pure @safe;
+        @property size_t position() const @nogc nothrow pure @safe;
+        void moveTo(size_t position) @nogc nothrow pure @safe;
     }
-    static assert(!isSource!HaveNotEmpty);
+    static assert(!isSource!NotSource);
+}
 
-    struct WrongResultType
-    {
-        @property bool empty() @nogc nothrow pure @safe;
-        @property int front() @nogc nothrow pure @safe;
-        void popFront() @nogc nothrow pure @safe;
-        SourceResult begin() @nogc nothrow pure @safe;
-        void accept() @nogc nothrow pure @safe;
-        /* SourceResult */ bool backtrack() @nogc nothrow pure @safe;
-    }
-    static assert(!isSource!WrongResultType);
+/**
+get source element type.
+*/
+template SourceElementType(S)
+if(isSource!S)
+{
+    alias SourceElementType
+        = ReturnType!((ref S s) => Parameters!(s.next)[0].init);
+}
 
-    struct WrongGC 
+///
+@nogc nothrow pure @safe unittest
+{
+    struct Source
     {
-        @property bool empty() @nogc nothrow pure @safe;
-        @property int front() /* @nogc */ nothrow pure @safe;
-        void popFront() @nogc nothrow pure @safe;
-        SourceResult begin() @nogc nothrow pure @safe;
-        void accept() @nogc nothrow pure @safe;
-        SourceResult backtrack() @nogc nothrow pure @safe;
+        bool next(out int e) @nogc nothrow pure @safe;
+        @property size_t position() const @nogc nothrow pure @safe;
+        void moveTo(size_t position) @nogc nothrow pure @safe;
     }
-    static assert(!isSource!WrongGC);
+    static assert(is(SourceElementType!Source == int));
+}
+
+/**
+get source position type.
+*/
+template SourcePositionType(S)
+if(isSource!S)
+{
+    alias SourcePositionType = ReturnType!((ref S s) => s.position);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    struct Source
+    {
+        bool next(out int e) @nogc nothrow pure @safe;
+        @property size_t position() const @nogc nothrow pure @safe;
+        void moveTo(size_t position) @nogc nothrow pure @safe;
+    }
+    static assert(is(SourcePositionType!Source == size_t));
 }
 
