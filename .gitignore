@@ -14,3 +14,5 @@ bcparser-test-*
 *.o
 *.obj
 *.lst
+*.swp
+
