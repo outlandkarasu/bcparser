@@ -49,5 +49,8 @@ struct Node(T) if (isTag!T)
 
     /// end position.
     SourcePosition end;
+
+    /// node children.
+    const(Node!T)[] children;
 }
 
