@@ -1,7 +1,7 @@
 /**
 Node structure.
 */
-module bcparser.node;
+module bcparser.node.node;
 
 import std.traits : isCopyable;
 
