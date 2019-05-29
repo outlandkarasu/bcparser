@@ -4,7 +4,7 @@ Node array module.
 module bcparser.node.node_array;
 
 import bcparser.node.node : isTag, Node;
-import bcparser.context : isAllocator;
+import bcparser.memory : isAllocator;
 
 @safe @nogc:
 

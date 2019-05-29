@@ -1,4 +1,4 @@
-module bcparser.context.allocator;
+module bcparser.memory.allocator;
 
 import std.traits : isCopyable, ReturnType;
 
