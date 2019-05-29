@@ -16,6 +16,7 @@ Source interface.
 */
 enum bool isSource(S) =
     is(typeof(S.init) == S)
+    && isCopyable!S
     && is(typeof((return ref S s) @nogc nothrow pure @safe
         {
             // get next element.
@@ -53,6 +54,16 @@ enum bool isSource(S) =
         void moveTo(size_t position) @nogc nothrow pure @safe;
     }
     static assert(!isSource!NotSource);
+
+    struct NotCopyiableSource
+    {
+        @disable this(this);
+        @disable this(ref return scope inout NotCopyiableSource rhs) inout;
+        bool next(out int e) @nogc nothrow pure @safe;
+        @property size_t position() const @nogc nothrow pure @safe;
+        void moveTo(size_t position) @nogc nothrow pure @safe;
+    }
+    static assert(!isSource!NotCopyiableSource);
 }
 
 /**

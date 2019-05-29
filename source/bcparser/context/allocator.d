@@ -1,4 +1,4 @@
-module bcparser.allocator;
+module bcparser.context.allocator;
 
 import std.traits : isCopyable, ReturnType;
 
@@ -36,3 +36,4 @@ enum bool isAllocator(A) =
     }
     static assert(!isAllocator!WrongGC);
 }
+
