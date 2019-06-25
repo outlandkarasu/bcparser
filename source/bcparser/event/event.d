@@ -14,6 +14,15 @@ struct ParsingEvent
     /// event position.
     size_t position;
 
+    /**
+    Returns:
+        true if end element.
+    */
+    @nogc nothrow @property pure @safe bool end() const 
+    {
+        return next is null;
+    }
+
 private:
     ParsingEvent* next;
 }
@@ -49,10 +58,12 @@ body
     assert(event1.tag == "test1");
     assert(event1.position == 100);
     assert(event1.next is null);
+    assert(event1.end);
 
     // for using pointer in @nogc @safe, use local array.
     ParsingEvent[1] events = [ParsingEvent("test2", 200)];
     event1.appendTo(&events[0]);
     assert(event1.next == &events[0]);
+    assert(!event1.end);
 }
 
