@@ -19,7 +19,7 @@ struct ArraySource(E)
         this.array_ = array;
     }
 
-    bool next(out E e) @nogc nothrow pure @safe
+    bool next(return scope out E e) @nogc nothrow pure @safe
     {
         if (position_ >= array_.length)
         {
