@@ -1,7 +1,7 @@
 /**
 Parsing source for array.
 */
-module bcparser.source.array;
+module bcparser.source.array_source;
 
 /**
 Array source.
