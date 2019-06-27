@@ -21,7 +21,7 @@ struct CAllocator
     Returns:
         true if succeeded.
     */
-    bool allocate(scope out void[] memory, size_t n) @nogc nothrow @trusted
+    bool allocate(scope return out void[] memory, size_t n) @nogc nothrow @trusted
     {
         auto p = malloc(n);
         if (!p)
@@ -42,7 +42,7 @@ struct CAllocator
     Returns:
         true if succeeded.
     */
-    bool resize(scope ref void[] memory, size_t n) @nogc nothrow @trusted
+    bool resize(scope return ref void[] memory, size_t n) @nogc nothrow @trusted
     in
     {
         assert(memory !is null);
@@ -65,14 +65,17 @@ struct CAllocator
     Params:
         memory = freeing memory. to empty when function succeeded.
     */
-    void free(scope ref void[] memory) @nogc nothrow @trusted
+    void free(scope return ref void[] memory) @nogc nothrow @trusted
     out
     {
         assert(memory is null);
     }
     body
     {
-        free(&memory[0]);
+        if (memory.length > 0)
+        {
+            free(&memory[0]);
+        }
         memory = null;
     }
 }
