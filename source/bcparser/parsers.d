@@ -8,16 +8,51 @@ import bcparser.context :
 ;
 
 /**
+parse empty source.
+
+Params:
+    C = context type.
+    context = parsing context.
+Returns:
+    true if source is empty.
+*/
+bool parseEmpty(C)(scope ref C context) @nogc nothrow @safe if(isContext!C)
+{
+    context.save();
+
+    ContextElementType!C c;
+    immutable result = !context.next(c);
+
+    context.backtrack();
+    return result;
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser.memory : CAllocator;
+    import bcparser.source : arraySource;
+
+    parse!((ref context) {
+        assert(!parseEmpty(context));
+    })(arraySource("t"), CAllocator());
+
+    parse!((ref context) {
+        assert(parseEmpty(context));
+    })(arraySource(""), CAllocator());
+}
+
+/**
 parse an any char.
 
 Params:
     C = context type.
     context = parsing context.
+Returns:
+    true if source has any char.
 */
 bool parseAny(C)(scope ref C context) @nogc nothrow @safe if(isContext!C)
 {
-    context.save();
-
     ContextElementType!C c;
     return context.next(c);
 }
@@ -45,6 +80,8 @@ Params:
     CH = character type.
     context = parsing context.
     expected = expected character.
+Returns:
+    true if source has expected char.
 */
 bool parseChar(C, CH)(scope ref C context, CH expected) @nogc nothrow @safe
     if(isContext!C && is(CH == ContextElementType!C))
