@@ -3,7 +3,7 @@ module bcparser.parsers.parse_range;
 import bcparser.context : ContextElementType, isContext, tryParse;
 
 /**
-parse string.
+parse char in range.
 
 Params:
     C = context type.
