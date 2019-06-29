@@ -47,13 +47,8 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     */
     ~this() @nogc nothrow @safe
     {
-        void[] memory = savedStates_;
-        allocator_.free(memory);
-        savedStates_ = null;
-
-        memory = events_;
-        allocator_.free(memory);
-        events_ = null;
+        allocator_.release(savedStates_);
+        allocator_.release(events_);
     }
 
     /**
@@ -127,9 +122,7 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
         events_ = events_[0 .. state.eventLength];
 
         // remove last state.
-        void[] memory = savedStates_;
-        allocator_.resize(memory, memory.length - State.sizeof);
-        savedStates_ = cast(State[]) memory;
+        allocator_.release(savedStates_, savedStates_.length - 1);
     }
 
     /**
@@ -151,9 +144,18 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     Returns:
         true if has internal error.
     */
-    @property hasError() const @nogc nothrow pure @safe
+    @property bool hasError() const @nogc nothrow pure @safe
     {
         return hasError_;
+    }
+
+    /**
+    Returns:
+        current events.
+    */
+    @property const(Event)[] events() const @nogc nothrow pure return @safe
+    {
+        return events_;
     }
 
 private:
@@ -206,25 +208,36 @@ private:
     auto allocator = CAllocator();
     auto context = Context!(typeof(source), typeof(allocator))(
             source, allocator);
+    assert(context.events.length == 0);
 
     char c;
     assert(context.next(c) && c == 't' && !context.hasError);
     assert(context.next(c) && c == 'e' && !context.hasError);
+
     assert(context.addEvent!"event_a");
+    assert(context.events.length == 1);
+    assert(context.events[0].name == "event_a");
+    assert(context.events[0].position == 2);
 
     assert(context.save());
     assert(context.next(c) && c == 's' && !context.hasError);
     assert(context.next(c) && c == 't' && !context.hasError);
     assert(!context.next(c) && c == char.init && !context.hasError);
+
     assert(context.addEvent!"event_b");
+    assert(context.events.length == 2);
+    assert(context.events[1].name == "event_b");
+    assert(context.events[1].position == 4);
 
     context.backtrack();
 
     assert(context.next(c) && c == 's' && !context.hasError);
     assert(context.next(c) && c == 't' && !context.hasError);
     assert(!context.next(c) && c == char.init && !context.hasError);
+    assert(context.events.length == 1);
+    assert(context.events[0].name == "event_a");
+    assert(context.events[0].position == 2);
 }
-
 
 private:
 
