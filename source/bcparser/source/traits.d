@@ -41,7 +41,7 @@ enum bool isSource(S) =
 {
     struct Source
     {
-        bool next(out int e) @nogc nothrow pure @safe;
+        bool next(return scope out int e) @nogc nothrow pure @safe;
         @property size_t position() const @nogc nothrow pure @safe;
         void moveTo(size_t position) @nogc nothrow pure @safe;
     }
@@ -59,7 +59,7 @@ enum bool isSource(S) =
     {
         @disable this(this);
         @disable this(ref return scope inout NotCopyiableSource rhs) inout;
-        bool next(out int e) @nogc nothrow pure @safe;
+        bool next(return scope out int e) @nogc nothrow pure @safe;
         @property size_t position() const @nogc nothrow pure @safe;
         void moveTo(size_t position) @nogc nothrow pure @safe;
     }
@@ -81,7 +81,7 @@ if(isSource!S)
 {
     struct Source
     {
-        bool next(out int e) @nogc nothrow pure @safe;
+        bool next(return scope out int e) @nogc nothrow pure @safe;
         @property size_t position() const @nogc nothrow pure @safe;
         void moveTo(size_t position) @nogc nothrow pure @safe;
     }
@@ -102,7 +102,7 @@ if(isSource!S)
 {
     struct Source
     {
-        bool next(out int e) @nogc nothrow pure @safe;
+        bool next(return scope out int e) @nogc nothrow pure @safe;
         @property size_t position() const @nogc nothrow pure @safe;
         void moveTo(size_t position) @nogc nothrow pure @safe;
     }

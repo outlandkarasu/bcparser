@@ -21,7 +21,7 @@ struct CAllocator
     Returns:
         true if succeeded.
     */
-    bool allocate(scope out void[] memory, size_t n) @nogc nothrow @trusted
+    bool allocate(scope return out void[] memory, size_t n) @nogc nothrow @trusted
     {
         auto p = malloc(n);
         if (!p)
@@ -42,7 +42,7 @@ struct CAllocator
     Returns:
         true if succeeded.
     */
-    bool resize(scope ref void[] memory, size_t n) @nogc nothrow @trusted
+    bool resize(scope return ref void[] memory, size_t n) @nogc nothrow @trusted
     in
     {
         assert(memory !is null);
@@ -65,14 +65,17 @@ struct CAllocator
     Params:
         memory = freeing memory. to empty when function succeeded.
     */
-    void free(scope ref void[] memory) @nogc nothrow @trusted
+    void free(scope return ref void[] memory) @nogc nothrow @trusted
     out
     {
         assert(memory is null);
     }
     body
     {
-        free(&memory[0]);
+        if (memory.length > 0)
+        {
+            free(&memory[0]);
+        }
         memory = null;
     }
 }
@@ -80,7 +83,7 @@ struct CAllocator
 static assert(isAllocator!CAllocator);
 
 ///
-@nogc nothrow @safe unittest
+@nogc nothrow @trusted unittest
 {
     auto allocator = CAllocator();
     void[] array;
@@ -88,13 +91,32 @@ static assert(isAllocator!CAllocator);
     assert(array.ptr !is null);
     assert(array.length == 5);
 
-    assert(allocator.resize(array, 1));
+    // set values.
+    foreach (i, ref v; cast(ubyte[]) array)
+    {
+        v = cast(ubyte) i;
+    }
+
+    // resize memory.
+    assert(allocator.resize(array, 3));
     assert(array.ptr !is null);
-    assert(array.length == 1);
+    assert(array.length == 3);
+
+    // keep old memory values.
+    foreach (i, v; cast(ubyte[]) array)
+    {
+        assert(v == i);
+    }
 
     assert(allocator.resize(array, 10));
     assert(array.ptr !is null);
     assert(array.length == 10);
+
+    // keep old memory values.
+    foreach (i, v; (cast(ubyte[]) array)[0 .. 3])
+    {
+        assert(v == i);
+    }
 
     allocator.free(array);
     assert(array.ptr is null);
