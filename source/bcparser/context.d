@@ -11,7 +11,6 @@ import bcparser.source :
     SourcePositionType
 ;
 
-
 /**
 Parsing context.
 
@@ -182,10 +181,10 @@ private:
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser.source : ArraySource;
     import bcparser.memory : CAllocator;
+    import bcparser.source : arraySource;
 
-    auto source = ArraySource!char("test");
+    auto source = arraySource("test");
     auto allocator = CAllocator();
     auto context = Context!(typeof(source), typeof(allocator))(
             source, allocator);
@@ -201,10 +200,10 @@ private:
 /// backtrack test.
 @nogc nothrow @safe unittest
 {
-    import bcparser.source : ArraySource;
     import bcparser.memory : CAllocator;
+    import bcparser.source : arraySource;
 
-    auto source = ArraySource!char("test");
+    auto source = arraySource("test");
     auto allocator = CAllocator();
     auto context = Context!(typeof(source), typeof(allocator))(
             source, allocator);
@@ -237,6 +236,50 @@ private:
     assert(context.events.length == 1);
     assert(context.events[0].name == "event_a");
     assert(context.events[0].position == 2);
+}
+
+/**
+Params:
+    C = target type.
+Returns:
+    true if C is context.
+*/
+enum isContext(C) = is(C: Context!(S, A), S, A);
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import bcparser.source : ArraySource;
+    import bcparser.memory : CAllocator;
+
+    static assert(!isContext!int);
+    static assert(isContext!(Context!(ArraySource!char, CAllocator)));
+}
+
+/**
+context element type.
+
+Params:
+    C = context type.
+    S = source type.
+    A = allocator type.
+*/
+template ContextElementType(C : Context!(S, A), S, A) {
+    alias ContextElementType = C.Element;
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser.source : arraySource;
+    import bcparser.memory : CAllocator;
+
+    auto source = arraySource("test");
+    auto allocator = CAllocator();
+    auto context = Context!(typeof(source), typeof(allocator))(
+        source, allocator);
+
+    static assert(is(ContextElementType!(typeof(context)) == char));
 }
 
 private:

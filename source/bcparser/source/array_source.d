@@ -71,3 +71,37 @@ private:
     assert(!source.next(c) && c == c.init);
 }
 
+/**
+construct array source.
+
+Params:
+    E = element type.
+    array = source array.
+Returns:
+    array source.
+*/
+ArraySource!(E) arraySource(E)(scope return const(E)[] array) @nogc nothrow pure @safe
+{
+    return ArraySource!(E)(array);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    auto source = arraySource("test");
+
+    char c;
+    assert(source.position == 0);
+    assert(source.next(c) && source.position == 1 && c == 't');
+    assert(source.next(c) && source.position == 2 && c == 'e');
+    assert(source.next(c) && source.position == 3 && c == 's');
+    assert(source.next(c) && source.position == 4 && c == 't');
+    assert(!source.next(c) && c == c.init);
+
+    source.moveTo(0);
+    assert(source.next(c) && source.position == 1 && c == 't');
+
+    source.moveTo(3);
+    assert(source.next(c) && source.position == 4 && c == 't');
+    assert(!source.next(c) && c == c.init);
+}
