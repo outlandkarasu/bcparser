@@ -116,7 +116,7 @@ body
     allocator.allocate(memory, 16 * int.sizeof);
     auto array = cast(int[]) memory;
     assert(array.length == 16);
-    foreach (i, v; array)
+    foreach (i, ref v; array)
     {
         v = cast(int) i;
     }
@@ -125,10 +125,9 @@ body
     allocator.release(array, 10);
     assert(array.length == 10);
 
-    import std.conv : to;
     foreach (i, v; array)
     {
-        //assert(v == i);
+        assert(v == i);
     }
 }
 
