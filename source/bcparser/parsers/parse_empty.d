@@ -1,6 +1,6 @@
 module bcparser.parsers.parse_empty;
 
-import bcparser.context : isContext, ContextElementType;
+import bcparser.context : isContext, ContextElementType, tryParse;
 
 /**
 parse empty source.
@@ -13,12 +13,12 @@ Returns:
 */
 bool parseEmpty(C)(scope ref C context) @nogc nothrow @safe if(isContext!C)
 {
-    context.save();
-
-    ContextElementType!C c;
-    immutable result = !context.next(c);
-
-    context.backtrack();
+    bool result;
+    context.tryParse!({
+        ContextElementType!C c;
+        result = !context.next(c);
+        return false;
+    });
     return result;
 }
 

@@ -49,7 +49,6 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     */
     ~this() @nogc nothrow @safe
     {
-        allocator_.release(savedStates_);
         allocator_.release(events_);
     }
 
@@ -75,57 +74,6 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
         return source_.next(e);
     }
 
-    /**
-    save current state for backtrack.
-
-    Returns:
-        true if succeeded.
-    */
-    bool save() @nogc nothrow @trusted
-    in
-    {
-        assert(!hasError);
-    }
-    out(result)
-    {
-        // has error if failed.
-        assert(result || hasError);
-    }
-    body
-    {
-        if (hasError_)
-        {
-            return false;
-        }
-
-        if (!allocator_.add(
-                savedStates_, State(source_.position, events_.length)))
-        {
-            hasError_ = true;
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-    backtrack to last saved state.
-    */
-    void backtrack() @nogc nothrow @trusted
-    in
-    {
-        assert(savedStates_.length > 0);
-    }
-    body
-    {
-        // restore last state.
-        auto state = savedStates_[$ - 1];
-        source_.moveTo(state.position);
-        events_ = events_[0 .. state.eventLength];
-
-        // remove last state.
-        allocator_.release(savedStates_, savedStates_.length - 1);
-    }
 
     /**
     add parsing event.
@@ -162,26 +110,11 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
 
 private:
 
-    /**
-    Parsing state.
-    */
-    struct State
-    {
-        /// saved position.
-        SourcePositionType!S position;
-
-        /// saved event length.
-        size_t eventLength;
-    }
-
     /// parsing source.
     S source_;
 
     /// allocator.
     A allocator_;
-
-    /// saved states.
-    State[] savedStates_;
 
     /// parsing events.
     Event[] events_;
@@ -211,24 +144,9 @@ private:
     assert(context.events[0].name == "event_a");
     assert(context.events[0].position == 2);
 
-    assert(context.save());
     assert(context.next(c) && c == 's' && !context.hasError);
     assert(context.next(c) && c == 't' && !context.hasError);
     assert(!context.next(c) && c == char.init && !context.hasError);
-
-    assert(context.addEvent!"event_b");
-    assert(context.events.length == 2);
-    assert(context.events[1].name == "event_b");
-    assert(context.events[1].position == 4);
-
-    context.backtrack();
-
-    assert(context.next(c) && c == 's' && !context.hasError);
-    assert(context.next(c) && c == 't' && !context.hasError);
-    assert(!context.next(c) && c == char.init && !context.hasError);
-    assert(context.events.length == 1);
-    assert(context.events[0].name == "event_a");
-    assert(context.events[0].position == 2);
 }
 
 /**
@@ -304,6 +222,74 @@ void parse(alias F, S, A)(
         assert(context.next(c) && c == 's' && !context.hasError);
         assert(context.next(c) && c == 't' && !context.hasError);
         assert(!context.next(c) && c == char.init && !context.hasError);
+    })(arraySource("test"), CAllocator());
+}
+
+/**
+try parse.
+
+Params:
+    F = parse function.
+    C = context type.
+    c = context.
+Returns:
+    true if succeeded.
+*/
+bool tryParse(alias F, C)(ref C context) @nogc nothrow @safe if(isContext!C)
+{
+    immutable position = context.source_.position;
+    immutable eventsLength = context.events_.length;
+    if (!F())
+    {
+        // parse failed. backtrack.
+        context.source_.moveTo(position);
+        if (eventsLength < context.events_.length)
+        {
+            context.allocator_.release(context.events_, eventsLength);
+        }
+        return false;
+    }
+
+    // succeeded.
+    return true;
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser.memory : CAllocator;
+    import bcparser.source : arraySource;
+
+    parse!((ref context) {
+        // accept and backtrack empty.
+        assert(context.tryParse!(() => true));
+        assert(!context.tryParse!(() => false));
+
+        // test backtrack.
+        assert(!context.tryParse!({
+            char c;
+            assert(context.next(c) && c == 't' && !context.hasError);
+            assert(context.next(c) && c == 'e' && !context.hasError);
+            context.addEvent!("event_1");
+
+            // backtrack.
+            return false;
+        }));
+        assert(context.events.length == 0);
+
+        // test accept.
+        assert(context.tryParse!({
+            char c;
+            assert(context.next(c) && c == 't' && !context.hasError);
+            assert(context.next(c) && c == 'e' && !context.hasError);
+            context.addEvent!("event_2");
+
+            // success.
+            return true;
+        }));
+        assert(context.events.length == 1);
+        assert(context.events[0].name == "event_2");
+        assert(context.events[0].position == 2);
     })(arraySource("test"), CAllocator());
 }
 
