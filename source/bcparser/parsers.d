@@ -8,6 +8,36 @@ import bcparser.context :
 ;
 
 /**
+parse an any char.
+
+Params:
+    C = context type.
+    context = parsing context.
+*/
+bool parseAny(C)(scope ref C context) @nogc nothrow @safe if(isContext!C)
+{
+    context.save();
+
+    ContextElementType!C c;
+    return context.next(c);
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser.memory : CAllocator;
+    import bcparser.source : arraySource;
+
+    parse!((ref context) {
+        assert(parseAny(context));
+        assert(parseAny(context));
+        assert(parseAny(context));
+        assert(parseAny(context));
+        assert(!parseAny(context));
+    })(arraySource("test"), CAllocator());
+}
+
+/**
 parse a char.
 
 Params:
