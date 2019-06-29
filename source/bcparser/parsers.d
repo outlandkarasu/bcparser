@@ -3,7 +3,8 @@ module bcparser.parsers;
 import bcparser.context :
     Context,
     ContextElementType,
-    isContext
+    isContext,
+    parse
 ;
 
 /**
@@ -41,18 +42,16 @@ bool parseChar(C, CH)(scope ref C context, CH expected) @nogc nothrow @safe
     import bcparser.memory : CAllocator;
     import bcparser.source : arraySource;
 
-    auto source = arraySource("test");
-    auto allocator = CAllocator();
-    auto context = Context!(typeof(source), typeof(allocator))(source, allocator);
-
-    assert(!parseChar(context, 'a'));
-    assert(parseChar(context, 't'));
-    assert(!parseChar(context, 'b'));
-    assert(parseChar(context, 'e'));
-    assert(!parseChar(context, 'c'));
-    assert(parseChar(context, 's'));
-    assert(!parseChar(context, 'd'));
-    assert(parseChar(context, 't'));
-    assert(!parseChar(context, 't'));
+    parse!((ref context) {
+        assert(!parseChar(context, 'a'));
+        assert(parseChar(context, 't'));
+        assert(!parseChar(context, 'b'));
+        assert(parseChar(context, 'e'));
+        assert(!parseChar(context, 'c'));
+        assert(parseChar(context, 's'));
+        assert(!parseChar(context, 'd'));
+        assert(parseChar(context, 't'));
+        assert(!parseChar(context, 't'));
+    })(arraySource("test"), CAllocator());
 }
 
