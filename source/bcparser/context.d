@@ -23,6 +23,9 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     /// element type.
     alias Element = SourceElementType!S;
 
+    /// event type.
+    alias Event = ParsingEvent!S;
+
     @disable this();
     @disable this(this);
 
@@ -159,8 +162,17 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
 
 private:
 
-    alias Event = ParsingEvent!S;
-    alias State = ParsingState!S;
+    /**
+    Parsing state.
+    */
+    struct State
+    {
+        /// saved position.
+        SourcePositionType!S position;
+
+        /// saved event length.
+        size_t eventLength;
+    }
 
     /// parsing source.
     S source_;
@@ -176,25 +188,6 @@ private:
 
     /// error flag.
     bool hasError_;
-}
-
-///
-@nogc nothrow @safe unittest
-{
-    import bcparser.memory : CAllocator;
-    import bcparser.source : arraySource;
-
-    auto source = arraySource("test");
-    auto allocator = CAllocator();
-    auto context = Context!(typeof(source), typeof(allocator))(
-            source, allocator);
-
-    char c;
-    assert(context.next(c) && c == 't' && !context.hasError);
-    assert(context.next(c) && c == 'e' && !context.hasError);
-    assert(context.next(c) && c == 's' && !context.hasError);
-    assert(context.next(c) && c == 't' && !context.hasError);
-    assert(!context.next(c) && c == char.init && !context.hasError);
 }
 
 /// backtrack test.
@@ -282,17 +275,35 @@ template ContextElementType(C : Context!(S, A), S, A) {
     static assert(is(ContextElementType!(typeof(context)) == char));
 }
 
-private:
-
 /**
-Parsing state.
+Params:
+    F = parse function.
+    S = source type.
+    A = allocator type.
+    source = target source.
+    allocator = target allocator.
 */
-struct ParsingState(S) if (isSource!S)
+void parse(alias F, S, A)(
+    auto scope ref S source,
+    auto scope ref A allocator) @nogc nothrow @safe
 {
-    /// saved position.
-    SourcePositionType!S position;
+    auto context = Context!(S, A)(source, allocator);
+    F(context);
+}
 
-    /// saved event length.
-    size_t eventLength;
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser.memory : CAllocator;
+    import bcparser.source : arraySource;
+
+    parse!((ref context) {
+        char c;
+        assert(context.next(c) && c == 't' && !context.hasError);
+        assert(context.next(c) && c == 'e' && !context.hasError);
+        assert(context.next(c) && c == 's' && !context.hasError);
+        assert(context.next(c) && c == 't' && !context.hasError);
+        assert(!context.next(c) && c == char.init && !context.hasError);
+    })(arraySource("test"), CAllocator());
 }
 
