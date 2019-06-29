@@ -1,5 +1,6 @@
 module bcparser.memory.allocator;
 
+import core.lifetime : emplace;
 import std.traits : isCopyable, ReturnType;
 
 /**
@@ -76,6 +77,59 @@ void release(A, E)(
     // release memory.
     allocator.release(array);
     assert(array.length == 0);
+}
+
+/**
+release N elements from array.
+
+Params:
+    A = allocator type.
+    E = element type.
+    allocator = memory allocator.
+    array = dest array.
+    n = release count.
+*/
+void release(A, E)(
+    scope return ref A allocator,
+    scope return ref E[] array,
+    size_t n) @nogc nothrow @trusted
+in
+{
+    assert(array.length >= n);
+}
+body
+{
+    void[] memory = array;
+    allocator.resize(memory, n * E.sizeof);
+    array = cast(E[]) memory[0 .. n * E.sizeof];
+}
+
+///
+@nogc nothrow @trusted unittest
+{
+    import bcparser.memory : CAllocator;
+
+    auto allocator = CAllocator();
+
+    // allocate memory.
+    void[] memory;
+    allocator.allocate(memory, 16 * int.sizeof);
+    auto array = cast(int[]) memory;
+    assert(array.length == 16);
+    foreach (i, v; array)
+    {
+        v = cast(int) i;
+    }
+
+    // release memory.
+    allocator.release(array, 10);
+    assert(array.length == 10);
+
+    import std.conv : to;
+    foreach (i, v; array)
+    {
+        //assert(v == i);
+    }
 }
 
 /**

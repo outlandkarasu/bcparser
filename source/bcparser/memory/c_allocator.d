@@ -83,7 +83,7 @@ struct CAllocator
 static assert(isAllocator!CAllocator);
 
 ///
-@nogc nothrow @safe unittest
+@nogc nothrow @trusted unittest
 {
     auto allocator = CAllocator();
     void[] array;
@@ -91,13 +91,32 @@ static assert(isAllocator!CAllocator);
     assert(array.ptr !is null);
     assert(array.length == 5);
 
-    assert(allocator.resize(array, 1));
+    // set values.
+    foreach (i, ref v; cast(ubyte[]) array)
+    {
+        v = cast(ubyte) i;
+    }
+
+    // resize memory.
+    assert(allocator.resize(array, 3));
     assert(array.ptr !is null);
-    assert(array.length == 1);
+    assert(array.length == 3);
+
+    // keep old memory values.
+    foreach (i, v; cast(ubyte[]) array)
+    {
+        assert(v == i);
+    }
 
     assert(allocator.resize(array, 10));
     assert(array.ptr !is null);
     assert(array.length == 10);
+
+    // keep old memory values.
+    foreach (i, v; (cast(ubyte[]) array)[0 .. 3])
+    {
+        assert(v == i);
+    }
 
     allocator.free(array);
     assert(array.ptr is null);
