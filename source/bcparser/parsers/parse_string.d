@@ -1,6 +1,6 @@
 module bcparser.parsers.parse_string;
 
-import bcparser.context : ContextElementType, isContext;
+import bcparser.context : ContextElementType, isContext, tryParse;
 
 /**
 parse string.
@@ -16,11 +16,22 @@ Returns:
 bool parseString(C, CH)(scope ref C context, scope const(CH)[] expected) @nogc nothrow @safe
     if(isContext!C && is(CH == ContextElementType!C))
 {
-    context.save();
-    return false;
+    return context.tryParse!({
+        foreach (e; expected)
+        {
+            CH c;
+            if (!context.next(c) || c != e)
+            {
+                // unmatch char.
+                return false;
+            }
+        }
+
+        // succeeded.
+        return true;
+    });
 }
 
-/+
 ///
 @nogc nothrow @safe unittest
 {
@@ -38,5 +49,4 @@ bool parseString(C, CH)(scope ref C context, scope const(CH)[] expected) @nogc n
         assert(parseString(context, ""));
     })(arraySource("test"), CAllocator());
 }
-+/
 
