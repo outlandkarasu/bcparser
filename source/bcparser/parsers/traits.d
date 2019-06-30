@@ -10,7 +10,7 @@ import std.traits :
     ReturnType
 ;
 
-import bcparser.source : isSource;
+import bcparser.context : isContext;
 
 /**
 Primitive parser function traits.
@@ -20,36 +20,37 @@ Params:
 enum bool isPrimitiveParser(alias P) =
     is(ReturnType!P == bool)
     && (Parameters!(P).length == 1)
-    && is(typeof((ref Parameters!(P)[0] s) @nogc nothrow @safe
+    && is(typeof((ref Parameters!(P)[0] context) @nogc nothrow @safe
         {
-            static assert(isSource!(Parameters!(P)[0]));
+            static assert(isContext!(Parameters!(P)[0]));
             static assert(ParameterStorageClassTuple!(P)[0]
                 & ParameterStorageClass.ref_);
 
-            bool result = P(s);
+            bool result = P(context);
         }));
 
 ///
 @nogc nothrow pure @safe unittest
 {
+    import bcparser.memory : CAllocator;
     import bcparser.source : ArraySource;
-    alias Source = ArraySource!char;
+    import bcparser.context : Context;
+    alias Ctx = Context!(ArraySource!char, CAllocator);
 
     // for lambda test.
-    static assert(isPrimitiveParser!((ref Source s) => true));
+    static assert(isPrimitiveParser!((ref Ctx s) => true));
+    static assert(!isPrimitiveParser!((ref Ctx s, char c) => true));
     static assert(!isPrimitiveParser!(() => true));
-    static assert(!isPrimitiveParser!((Source s) => true));
-    static assert(!isPrimitiveParser!((out Source s) => true));
-    static assert(!isPrimitiveParser!((ref Source s) => 5));
-    static assert(!isPrimitiveParser!((ref Source s) @system => true));
-    static assert(!isPrimitiveParser!((ref Source s) => new bool(false)));
-    static assert(!isPrimitiveParser!((ref Source s) { throw new Exception("error"); }));
+    static assert(!isPrimitiveParser!((ref Ctx s) => 5));
+    static assert(!isPrimitiveParser!((ref Ctx s) @system => true));
+    static assert(!isPrimitiveParser!((ref Ctx s) => new bool(false)));
+    static assert(!isPrimitiveParser!((ref Ctx s) { throw new Exception("error"); }));
 
     // for functions test.
-    bool parser(ref Source s) { return true; }
+    bool parser(ref Ctx s) { return true; }
     static assert(isPrimitiveParser!parser);
 
-    bool notParser(Source s) { return true; }
+    bool notParser(ref Ctx s, char c) { return true; }
     static assert(!isPrimitiveParser!notParser);
 }
 
