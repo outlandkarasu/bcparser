@@ -32,7 +32,6 @@ bool parseOption(alias P, C)(ref C context) @nogc nothrow @safe
     import bcparser.context : parse;
     import bcparser.parsers : parseChar;
 
-    auto source = arraySource("test");
     parse!((ref context) {
         // true if matched.
         assert(context.parseOption!((ref c) => c.parseChar('t')));
