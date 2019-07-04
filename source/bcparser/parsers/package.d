@@ -13,6 +13,7 @@ public import bcparser.parsers.parse_string;
 
 // composite parsers.
 public import bcparser.parsers.parse_option;
+public import bcparser.parsers.parse_zero_or_more;
 
 public import bcparser.parsers.traits;
 
