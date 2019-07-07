@@ -1,7 +1,7 @@
 /**
 zero or more parser module.
 */
-module bcparser.parsers.parse_zero_or_more;
+module bcparser.parsers.composites.parse_zero_or_more;
 
 import bcparser.context : isContext;
 import bcparser.parsers.traits : isPrimitiveParser;

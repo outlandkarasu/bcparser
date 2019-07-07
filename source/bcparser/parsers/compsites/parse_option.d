@@ -1,7 +1,7 @@
 /**
 Composite parser optional module.
 */
-module bcparser.parsers.parse_option;
+module bcparser.parsers.composites.parse_option;
 
 import bcparser.context : isContext;
 import bcparser.parsers.traits : isPrimitiveParser;
