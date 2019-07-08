@@ -17,7 +17,7 @@ Returns:
     true if matched one ore more times.
 */
 bool parseOneOrMore(alias P, C)(ref C context) @nogc nothrow @safe
-    if(isContext!C && isPrimitiveParser!((ref C c) => P(c)))
+    if(isContext!C && isPrimitiveParser!(P, C))
 {
     if (!P(context)) {
         return false;

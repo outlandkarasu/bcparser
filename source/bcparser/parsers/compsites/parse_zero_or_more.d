@@ -17,7 +17,7 @@ Returns:
     true if no have error.
 */
 bool parseZeroOrMore(alias P, C)(ref C context) @nogc nothrow @safe
-    if(isContext!C && isPrimitiveParser!((ref C c) => P(c)))
+    if(isContext!C && isPrimitiveParser!(P, C))
 {
     while(P(context)) {}
     return !context.hasError;

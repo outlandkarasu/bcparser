@@ -3,8 +3,6 @@ Sequence parser module.
 */
 module bcparser.parsers.composites.parse_sequence;
 
-import std.meta : allSatisfy;
-
 import bcparser.context : isContext, tryParse;
 import bcparser.parsers.traits : isPrimitiveParser;
 
@@ -26,7 +24,13 @@ template parseSequence(P...)
         true if matched all parsers.
     */
     bool parseSequence(C)(ref C context) @nogc nothrow @safe
-        if(isContext!C)
+        if(isContext!C && is(typeof(
+        {
+            foreach (p; P)
+            {
+                static assert(isPrimitiveParser!(p, C));
+            }
+        })))
     {
         return context.tryParse!({
             foreach(parser; P)
