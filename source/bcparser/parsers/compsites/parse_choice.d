@@ -3,7 +3,7 @@ Ordered choice parser module.
 */
 module bcparser.parsers.composites.parse_choice;
 
-import bcparser.context : isContext, tryParse;
+import bcparser.context : isContext;
 import bcparser.parsers.traits : isPrimitiveParser;
 
 /**
