@@ -1,4 +1,4 @@
-module bcparser.parsers.parse_set;
+module bcparser.parsers.primitives.parse_set;
 
 import bcparser.context : ContextElementType, isContext, tryParse;
 
