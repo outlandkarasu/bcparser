@@ -4,17 +4,8 @@ Event parser module.
 module bcparser.parsers.composites.parse_event;
 
 import bcparser.context : isContext, tryParse;
+import bcparser.event : EVENT_END_PREFIX, EVENT_START_PREFIX;
 import bcparser.parsers.traits : isPrimitiveParser;
-
-/**
-Event start prefix.
-*/
-enum EVENT_START_PREFIX = "start.";
-
-/**
-Event end prefix.
-*/
-enum EVENT_END_PREFIX = "end.";
 
 /**
 parse using optional parser.
