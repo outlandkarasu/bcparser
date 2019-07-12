@@ -81,6 +81,31 @@ struct ParsingResult
         return message_;
     }
 
+    /**
+    Params:
+        op = operator.
+        rhs = right hand side.
+    Returns:
+        match and match => match
+        match and unmatch => unmatch
+        match and error => error
+        unmatch and unmatch => unmatch
+        unmatch and error => error
+    */
+    ParsingResult opBinary(string op)(auto scope ref const(ParsingResult) rhs) const nothrow pure
+        if (op == "&")
+    {
+        final switch (resultType_)
+        {
+            case Type.match:
+                return rhs;
+            case Type.unmatch:
+                return rhs.hasError ? rhs : this;
+            case Type.error:
+                return this;
+        }
+    }
+
 private:
 
     enum Type
@@ -126,5 +151,24 @@ private:
     assert(!error.isUnmatch);
     assert(error.hasError);
     assert(error.message == "test error");
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    immutable error = ParsingResult.createError("test");
+
+    assert((ParsingResult.match & ParsingResult.match).isMatch);
+    assert((ParsingResult.unmatch & ParsingResult.unmatch).isUnmatch);
+    assert((error & error).hasError);
+
+    assert((ParsingResult.unmatch & ParsingResult.match).isUnmatch);
+    assert((ParsingResult.match & ParsingResult.unmatch).isUnmatch);
+
+    assert((ParsingResult.unmatch & error).hasError);
+    assert((error & ParsingResult.unmatch).hasError);
+
+    assert((ParsingResult.match & error).hasError);
+    assert((error & ParsingResult.match).hasError);
 }
 
