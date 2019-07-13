@@ -44,21 +44,30 @@ ParsingResult parseSet(C, CH)(scope ref C context, scope const(CH)[] set) @nogc 
     import bcparser.source : arraySource;
 
     parse!((ref context) {
+        // lower alpha.
         assert(!parseSet(context, "019"));
         assert(!parseSet(context, "ABZ"));
         assert(parseSet(context, "abz"));
 
+        // digit.
         assert(!parseSet(context, "ABZ"));
         assert(!parseSet(context, "abz"));
         assert(parseSet(context, "019"));
 
+        // upper alpha.
         assert(!parseSet(context, "abz"));
         assert(!parseSet(context, "019"));
         assert(parseSet(context, "ABZ"));
 
+        // digit.
         assert(!parseSet(context, "abz"));
         assert(!parseSet(context, "ABZ"));
         assert(parseSet(context, "019"));
+
+        // empty
+        assert(!parseSet(context, "abz"));
+        assert(!parseSet(context, "ABZ"));
+        assert(!parseSet(context, "019"));
     })(arraySource("a0Z9"), CAllocator());
 }
 
