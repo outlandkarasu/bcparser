@@ -14,6 +14,7 @@ import std.traits :
 ;
 
 import bcparser.context : isContext;
+import bcparser.result : ParsingResult;
 
 /**
 Primitive parser function traits.
@@ -25,7 +26,7 @@ enum bool isPrimitiveParserFunction(P) =
     isCallable!P
     && is(typeof((ref Parameters!(P)[0] context) @nogc nothrow @safe
         {
-            static assert(is(ReturnType!P == bool));
+            static assert(is(ReturnType!P : ParsingResult));
             static assert(Parameters!(P).length == 1);
             static assert(hasFunctionAttributes!(P, "@nogc", "nothrow", "@safe"));
             static assert(isContext!(Parameters!(P)[0]));
@@ -41,19 +42,19 @@ enum bool isPrimitiveParserFunction(P) =
     alias Ctx = Context!(ArraySource!char, CAllocator);
 
     // lambda tests.
-    static assert(isPrimitiveParserFunction!(typeof((ref Ctx s) => true)));
-    static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s, char c) => true)));
-    static assert(!isPrimitiveParserFunction!(typeof(() => true)));
-    static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) => 5)));
-    static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) @system => true)));
-    static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) => new bool(false))));
+    static assert(isPrimitiveParserFunction!(typeof((ref Ctx s) => ParsingResult.match)));
+    static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s, char c) => ParsingResult.match)));
+    static assert(!isPrimitiveParserFunction!(typeof(() => ParsingResult.match)));
+    static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) => true)));
+    static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) @system => ParsingResult.match)));
+    static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) => ParsingResult.createError(new string(5)))));
     static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) { throw new Exception("error"); })));
 
     // functions tests.
-    bool parser(ref Ctx s) @nogc nothrow pure @safe { return true; }
+    ParsingResult parser(ref Ctx s) @nogc nothrow pure @safe { return ParsingResult.match; }
     static assert(isPrimitiveParserFunction!(typeof(parser)));
 
-    bool notParser(ref Ctx s, char c) { return true; }
+    ParsingResult notParser(ref Ctx s, char c) { return ParsingResult.match; }
     static assert(!isPrimitiveParserFunction!(typeof(notParser)));
 }
 
@@ -82,16 +83,16 @@ enum bool isPrimitiveParser(P, C) = isPrimitiveParserFunction!P;
     alias Ctx = Context!(ArraySource!char, CAllocator);
 
     // lambda tests.
-    static assert(isPrimitiveParser!(typeof((ref Ctx s) => true), Ctx));
-    static assert(isPrimitiveParser!((ref s) => true, Ctx));
-    static assert(isPrimitiveParser!((ref Ctx s) => true, Ctx));
+    static assert(isPrimitiveParser!(typeof((ref Ctx s) => ParsingResult.match), Ctx));
+    static assert(isPrimitiveParser!((ref s) => ParsingResult.match, Ctx));
+    static assert(isPrimitiveParser!((ref Ctx s) => ParsingResult.match, Ctx));
 
     // functions tests.
-    bool parser(ref Ctx s) @nogc nothrow pure @safe { return true; }
+    ParsingResult parser(ref Ctx s) @nogc nothrow pure @safe { return ParsingResult.match; }
     static assert(isPrimitiveParser!(parser, Ctx));
     static assert(isPrimitiveParser!(typeof(parser), Ctx));
 
-    bool notParser(ref Ctx s, char c) { return true; }
+    ParsingResult notParser(ref Ctx s, char c) { return ParsingResult.match; }
     static assert(!isPrimitiveParser!(notParser, Ctx));
     static assert(!isPrimitiveParser!(typeof(notParser), Ctx));
 }

@@ -43,7 +43,18 @@ struct ParsingResult
         return ParsingResult(Type.error, message);
     }
 
-    @disable this();
+    /**
+    bool to parsing result.
+
+    Params:
+        b = match or unmatch.
+    Returns:
+        parsing result.
+    */
+    static ref immutable(ParsingResult) of(bool b) nothrow pure
+    {
+        return b ? match : unmatch;
+    }
 
     /**
     Returns:
@@ -52,6 +63,14 @@ struct ParsingResult
     @property bool isMatch() const nothrow pure
     {
         return resultType_ == Type.match;
+    }
+
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        assert(ParsingResult.match.isMatch);
+        assert(!ParsingResult.unmatch.isMatch);
+        assert(!ParsingResult.createError("test").isMatch);
     }
 
     /**
@@ -63,6 +82,14 @@ struct ParsingResult
         return resultType_ == Type.unmatch;
     }
 
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        assert(!ParsingResult.match.isUnmatch);
+        assert(ParsingResult.unmatch.isUnmatch);
+        assert(!ParsingResult.createError("test").isUnmatch);
+    }
+
     /**
     Returns:
         true if has error.
@@ -72,6 +99,14 @@ struct ParsingResult
         return resultType_ == Type.error;
     }
 
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        assert(!ParsingResult.match.hasError);
+        assert(!ParsingResult.unmatch.hasError);
+        assert(ParsingResult.createError("test").hasError);
+    }
+
     /**
     Returns:
         error message.
@@ -79,6 +114,14 @@ struct ParsingResult
     @property string message() const nothrow pure
     {
         return message_;
+    }
+
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        assert(ParsingResult.match.message == null);
+        assert(ParsingResult.unmatch.message == null);
+        assert(ParsingResult.createError("test").message == "test");
     }
 
     /**
@@ -106,6 +149,25 @@ struct ParsingResult
         }
     }
 
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        immutable error = ParsingResult.createError("test");
+
+        assert((ParsingResult.match & ParsingResult.match).isMatch);
+        assert((ParsingResult.unmatch & ParsingResult.unmatch).isUnmatch);
+        assert((error & error).hasError);
+
+        assert((ParsingResult.unmatch & ParsingResult.match).isUnmatch);
+        assert((ParsingResult.match & ParsingResult.unmatch).isUnmatch);
+
+        assert((ParsingResult.match & error).hasError);
+        assert((error & ParsingResult.match).hasError);
+
+        assert((ParsingResult.unmatch & error).hasError);
+        assert((error & ParsingResult.unmatch).hasError);
+    }
+
     /**
     Params:
         op = operator.
@@ -131,6 +193,43 @@ struct ParsingResult
         }
     }
 
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        immutable error = ParsingResult.createError("test");
+
+        assert((ParsingResult.match | ParsingResult.match).isMatch);
+        assert((ParsingResult.unmatch | ParsingResult.unmatch).isUnmatch);
+        assert((error | error).hasError);
+
+        assert((ParsingResult.unmatch | ParsingResult.match).isMatch);
+        assert((ParsingResult.match | ParsingResult.unmatch).isMatch);
+
+        assert((ParsingResult.match | error).hasError);
+        assert((error | ParsingResult.match).hasError);
+
+        assert((ParsingResult.unmatch | error).hasError);
+        assert((error | ParsingResult.unmatch).hasError);
+    }
+
+    /**
+    Returns:
+        true if matched.
+    */
+    T opCast(T)() const nothrow pure
+        if (is(T == bool))
+    {
+        return isMatch;
+    }
+
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        assert(ParsingResult.match);
+        assert(!ParsingResult.unmatch);
+        assert(!ParsingResult.createError("test"));
+    }
+
 private:
 
     enum Type
@@ -152,67 +251,15 @@ private:
     }
 
     Type resultType_ = Type.error;
-    string message_ = "uninitialized.";
+    string message_ = "uninitialized";
 }
 
 ///
 @nogc nothrow pure @safe unittest
 {
-    // match result.
-    assert(ParsingResult.match.isMatch);
-    assert(!ParsingResult.match.isUnmatch);
-    assert(!ParsingResult.match.hasError);
-    assert(ParsingResult.match.message == null);
-
-    // unmatch result.
-    assert(!ParsingResult.unmatch.isMatch);
-    assert(ParsingResult.unmatch.isUnmatch);
-    assert(!ParsingResult.unmatch.hasError);
-    assert(ParsingResult.unmatch.message == null);
-
-    // error result.
-    immutable error = ParsingResult.createError("test error");
-    assert(!error.isMatch);
-    assert(!error.isUnmatch);
-    assert(error.hasError);
-    assert(error.message == "test error");
+    ParsingResult result;
+    assert(result.hasError);
+    assert(result.message == "uninitialized");
 }
 
-///
-@nogc nothrow pure @safe unittest
-{
-    immutable error = ParsingResult.createError("test");
-
-    assert((ParsingResult.match & ParsingResult.match).isMatch);
-    assert((ParsingResult.unmatch & ParsingResult.unmatch).isUnmatch);
-    assert((error & error).hasError);
-
-    assert((ParsingResult.unmatch & ParsingResult.match).isUnmatch);
-    assert((ParsingResult.match & ParsingResult.unmatch).isUnmatch);
-
-    assert((ParsingResult.match & error).hasError);
-    assert((error & ParsingResult.match).hasError);
-
-    assert((ParsingResult.unmatch & error).hasError);
-    assert((error & ParsingResult.unmatch).hasError);
-}
-
-///
-@nogc nothrow pure @safe unittest
-{
-    immutable error = ParsingResult.createError("test");
-
-    assert((ParsingResult.match | ParsingResult.match).isMatch);
-    assert((ParsingResult.unmatch | ParsingResult.unmatch).isUnmatch);
-    assert((error | error).hasError);
-
-    assert((ParsingResult.unmatch | ParsingResult.match).isMatch);
-    assert((ParsingResult.match | ParsingResult.unmatch).isMatch);
-
-    assert((ParsingResult.match | error).hasError);
-    assert((error | ParsingResult.match).hasError);
-
-    assert((ParsingResult.unmatch | error).hasError);
-    assert((error | ParsingResult.unmatch).hasError);
-}
 

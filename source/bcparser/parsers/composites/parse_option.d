@@ -5,6 +5,7 @@ module bcparser.parsers.composites.parse_option;
 
 import bcparser.context : isContext;
 import bcparser.parsers.traits : isPrimitiveParser;
+import bcparser.result : ParsingResult;
 
 /**
 parse using optional parser.
@@ -16,12 +17,12 @@ Params:
 Returns:
     true if no have error.
 */
-bool parseOption(alias P, C)(ref C context) @nogc nothrow @safe
+ParsingResult parseOption(alias P, C)(ref C context) @nogc nothrow @safe
     if(isContext!C && isPrimitiveParser!(P, C))
 {
     // discard result.
-    P(context);
-    return !context.hasError;
+    auto result = P(context);
+    return result | ParsingResult.match;
 }
 
 ///

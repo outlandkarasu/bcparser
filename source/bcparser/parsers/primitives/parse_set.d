@@ -1,6 +1,7 @@
 module bcparser.parsers.primitives.parse_set;
 
 import bcparser.context : ContextElementType, isContext, tryParse;
+import bcparser.result : ParsingResult;
 
 /**
 parse char in set.
@@ -13,25 +14,25 @@ Params:
 Returns:
     true if source has expected char in set.
 */
-bool parseSet(C, CH)(scope ref C context, scope const(CH)[] set) @nogc nothrow @safe
+ParsingResult parseSet(C, CH)(scope ref C context, scope const(CH)[] set) @nogc nothrow @safe
     if(isContext!C && is(CH == ContextElementType!C))
 {
     return context.tryParse!({
         CH c;
         if (!context.next(c))
         {
-            return false;
+            return ParsingResult.unmatch;
         }
 
         foreach (e; set)
         {
             if (c == e)
             {
-                return true;
+                return ParsingResult.match;
             }
         }
 
-        return false;
+        return ParsingResult.unmatch;
     });
 }
 

@@ -6,6 +6,7 @@ module bcparser.parsers.composites.parse_event;
 import bcparser.context : isContext, tryParse;
 import bcparser.event : EVENT_END_PREFIX, EVENT_START_PREFIX;
 import bcparser.parsers.traits : isPrimitiveParser;
+import bcparser.result : ParsingResult;
 
 /**
 parse using optional parser.
@@ -18,19 +19,20 @@ Params:
 Returns:
     true if no have error.
 */
-bool parseEvent(string name, alias P, C)(ref C context) @nogc nothrow @safe
+ParsingResult parseEvent(string name, alias P, C)(ref C context) @nogc nothrow @safe
     if(isContext!C && isPrimitiveParser!(P, C))
 {
     return context.tryParse!({
         context.addEvent!(EVENT_START_PREFIX ~ name);
 
-        if (!P(context))
+        immutable result = P(context);
+        if (!result)
         {
-            return false;
+            return result;
         }
 
         context.addEvent!(EVENT_END_PREFIX ~ name);
-        return !context.hasError;
+        return result;
     });
 }
 

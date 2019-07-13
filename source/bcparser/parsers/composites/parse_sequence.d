@@ -5,6 +5,7 @@ module bcparser.parsers.composites.parse_sequence;
 
 import bcparser.context : isContext, tryParse;
 import bcparser.parsers.traits : isPrimitiveParser;
+import bcparser.result : ParsingResult;
 
 /**
 parse using sequence parser.
@@ -23,7 +24,7 @@ template parseSequence(P...)
     Returns:
         true if matched all parsers.
     */
-    bool parseSequence(C)(ref C context) @nogc nothrow @safe
+    ParsingResult parseSequence(C)(ref C context) @nogc nothrow @safe
         if(isContext!C && is(typeof(
         {
             foreach (p; P)
@@ -35,12 +36,13 @@ template parseSequence(P...)
         return context.tryParse!({
             foreach(parser; P)
             {
-                if(!parser(context))
+                auto result = parser(context);
+                if(!result)
                 {
-                    return false;
+                    return result;
                 }
             }
-            return true;
+            return ParsingResult.match;
         });
     }
 }
