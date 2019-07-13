@@ -1,7 +1,7 @@
 /**
 Tree module.
 */
-module bcparesr.tree;
+module bcparser.tree;
 
 import bcparser.context : Context;
 import bcparser.event : ParsingEvent;

@@ -5,6 +5,7 @@ module bcparser.parsers.composites.parse_not;
 
 import bcparser.context : isContext, tryParse;
 import bcparser.parsers.traits : isPrimitiveParser;
+import bcparser.result : ParsingResult;
 
 /**
 parse using not parser.
@@ -16,15 +17,15 @@ Params:
 Returns:
     true if unmatched.
 */
-bool parseNot(alias P, C)(ref C context) @nogc nothrow @safe
+ParsingResult parseNot(alias P, C)(ref C context) @nogc nothrow @safe
     if(isContext!C && isPrimitiveParser!(P, C))
 {
-    bool result;
+    ParsingResult result;
     context.tryParse!({
         result = P(context);
-        return false;
+        return ParsingResult.unmatch;
     });
-    return !result;
+    return result.hasError ?  result : ParsingResult.of(!result);
 }
 
 ///

@@ -5,6 +5,7 @@ module bcparser.parsers.composites.parse_one_or_more;
 
 import bcparser.context : isContext;
 import bcparser.parsers.traits : isPrimitiveParser;
+import bcparser.result : ParsingResult;
 
 /**
 parse using one or more parser.
@@ -16,15 +17,22 @@ Params:
 Returns:
     true if matched one ore more times.
 */
-bool parseOneOrMore(alias P, C)(ref C context) @nogc nothrow @safe
+ParsingResult parseOneOrMore(alias P, C)(ref C context) @nogc nothrow @safe
     if(isContext!C && isPrimitiveParser!(P, C))
 {
-    if (!P(context)) {
-        return false;
+    ParsingResult headResult = P(context);
+    if (!headResult)
+    {
+        return headResult;
     }
 
-    while(P(context)) {}
-    return !context.hasError;
+    ParsingResult tailResult;
+    do
+    {
+        tailResult = P(context);
+    }
+    while(tailResult);
+    return headResult | tailResult;
 }
 
 ///

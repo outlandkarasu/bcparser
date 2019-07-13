@@ -5,6 +5,7 @@ module bcparser.parsers.composites.parse_zero_or_more;
 
 import bcparser.context : isContext;
 import bcparser.parsers.traits : isPrimitiveParser;
+import bcparser.result : ParsingResult;
 
 /**
 parse using zero or more parser.
@@ -16,11 +17,12 @@ Params:
 Returns:
     true if no have error.
 */
-bool parseZeroOrMore(alias P, C)(ref C context) @nogc nothrow @safe
+ParsingResult parseZeroOrMore(alias P, C)(ref C context) @nogc nothrow @safe
     if(isContext!C && isPrimitiveParser!(P, C))
 {
-    while(P(context)) {}
-    return !context.hasError;
+    ParsingResult result;
+    while ((result = P(context)).isMatch) {}
+    return ParsingResult.match | result;
 }
 
 ///

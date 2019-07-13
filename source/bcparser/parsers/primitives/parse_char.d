@@ -1,6 +1,7 @@
 module bcparser.parsers.primitives.parse_char;
 
 import bcparser.context : ContextElementType, isContext, tryParse;
+import bcparser.result : ParsingResult;
 
 /**
 parse a char.
@@ -11,23 +12,24 @@ Params:
     context = parsing context.
     expected = expected character.
 Returns:
-    true if source has expected char.
+    match if source has expected char.
 */
-bool parseChar(C, CH)(scope ref C context, CH expected) @nogc nothrow @safe
+ParsingResult parseChar(C, CH)(scope ref C context, CH expected) @nogc nothrow @safe
     if(isContext!C && is(CH == ContextElementType!C))
 {
     return context.tryParse!({
         CH current;
         if (!context.next(current))
         {
-            return false;
+            return ParsingResult.unmatch;
         }
 
         if (current != expected)
         {
-            return false;
+            return ParsingResult.unmatch;
         }
-        return true;
+
+        return ParsingResult.match;
     });
 }
 

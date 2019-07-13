@@ -5,6 +5,7 @@ module bcparser.parsers.composites.parse_choice;
 
 import bcparser.context : isContext;
 import bcparser.parsers.traits : isPrimitiveParser;
+import bcparser.result : ParsingResult;
 
 /**
 parse using ordered choice parser.
@@ -23,7 +24,7 @@ template parseChoice(P...)
     Returns:
         true if matched all parsers.
     */
-    bool parseChoice(C)(ref C context) @nogc nothrow @safe
+    ParsingResult parseChoice(C)(ref C context) @nogc nothrow @safe
         if(isContext!C && is(typeof(
         {
             foreach (p; P)
@@ -34,12 +35,14 @@ template parseChoice(P...)
     {
         foreach(parser; P)
         {
-            if(parser(context))
+            immutable result = parser(context);
+            if(!result.isUnmatch)
             {
-                return true;
+                return result;
             }
         }
-        return false;
+
+        return ParsingResult.unmatch;
     }
 }
 

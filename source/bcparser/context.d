@@ -5,11 +5,14 @@ module bcparser.context;
 
 import bcparser.event : ParsingEvent;
 import bcparser.memory : add, isAllocator, release;
+import bcparser.result : ParsingResult;
 import bcparser.source :
     isSource,
     SourceElementType,
     SourcePositionType
 ;
+
+import std.traits : ReturnType;
 
 /**
 Parsing context.
@@ -233,13 +236,15 @@ Params:
     C = context type.
     c = context.
 Returns:
-    true if succeeded.
+    match if succeeded.
 */
-bool tryParse(alias F, C)(ref C context) @nogc nothrow @safe if(isContext!C)
+ParsingResult tryParse(alias F, C)(ref C context) @nogc nothrow @safe
+    if(isContext!C && is(ReturnType!F : ParsingResult))
 {
     immutable position = context.source_.position;
     immutable eventsLength = context.events_.length;
-    if (!F())
+    immutable result = F();
+    if (!result)
     {
         // parse failed. backtrack.
         context.source_.moveTo(position);
@@ -247,11 +252,8 @@ bool tryParse(alias F, C)(ref C context) @nogc nothrow @safe if(isContext!C)
         {
             context.allocator_.release(context.events_, eventsLength);
         }
-        return false;
     }
-
-    // succeeded.
-    return true;
+    return result;
 }
 
 ///
@@ -262,8 +264,8 @@ bool tryParse(alias F, C)(ref C context) @nogc nothrow @safe if(isContext!C)
 
     parse!((ref context) {
         // accept and backtrack empty.
-        assert(context.tryParse!(() => true));
-        assert(!context.tryParse!(() => false));
+        assert(context.tryParse!(() => ParsingResult.match));
+        assert(!context.tryParse!(() => ParsingResult.unmatch));
 
         // test backtrack.
         assert(!context.tryParse!({
@@ -273,7 +275,7 @@ bool tryParse(alias F, C)(ref C context) @nogc nothrow @safe if(isContext!C)
             context.addEvent!("event_1");
 
             // backtrack.
-            return false;
+            return ParsingResult.unmatch;
         }));
         assert(context.events.length == 0);
 
@@ -285,7 +287,7 @@ bool tryParse(alias F, C)(ref C context) @nogc nothrow @safe if(isContext!C)
             context.addEvent!("event_2");
 
             // success.
-            return true;
+            return ParsingResult.match;
         }));
         assert(context.events.length == 1);
         assert(context.events[0].name == "event_2");

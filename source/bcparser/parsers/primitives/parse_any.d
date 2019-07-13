@@ -1,6 +1,7 @@
 module bcparser.parsers.primitives.parse_any;
 
 import bcparser.context : ContextElementType, isContext;
+import bcparser.result : ParsingResult;
 
 /**
 parse an any char.
@@ -9,12 +10,12 @@ Params:
     C = context type.
     context = parsing context.
 Returns:
-    true if source has any char.
+    match if source has any char.
 */
-bool parseAny(C)(scope ref C context) @nogc nothrow @safe if(isContext!C)
+ParsingResult parseAny(C)(scope ref C context) @nogc nothrow @safe if(isContext!C)
 {
     ContextElementType!C c;
-    return context.next(c);
+    return ParsingResult.of(context.next(c));
 }
 
 ///
