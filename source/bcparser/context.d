@@ -137,30 +137,60 @@ private:
     ParsingResult errorState_ = ParsingResult.match;
 }
 
-/// backtrack test.
+///
 @nogc nothrow @safe unittest
 {
     import bcparser.memory : CAllocator;
     import bcparser.source : arraySource;
 
+    // parse source
     auto source = arraySource("test");
     auto allocator = CAllocator();
     auto context = Context!(typeof(source), typeof(allocator))(
             source, allocator);
     assert(context.events.length == 0);
 
+    // fetch chars.
     char c;
     assert(context.next(c) && c == 't' && !context.hasError);
     assert(context.next(c) && c == 'e' && !context.hasError);
 
+    // add parsing event.
     assert(context.addEvent!"event_a");
     assert(context.events.length == 1);
     assert(context.events[0].name == "event_a");
     assert(context.events[0].position == 2);
 
+    // fetch rest chars.
     assert(context.next(c) && c == 's' && !context.hasError);
     assert(context.next(c) && c == 't' && !context.hasError);
     assert(!context.next(c) && c == char.init && !context.hasError);
+}
+
+/// test error handling.
+@nogc nothrow @safe unittest
+{
+    import bcparser.memory : ErrorAllocator;
+    import bcparser.source : arraySource;
+
+    // parse source
+    auto source = arraySource("test");
+    auto allocator = ErrorAllocator();
+    auto context = Context!(typeof(source), typeof(allocator))(
+            source, allocator);
+
+    // fetch chars.
+    char c;
+    assert(context.next(c) && c == 't' && !context.hasError);
+    assert(context.next(c) && c == 'e' && !context.hasError);
+
+    // add parsing event and error.
+    assert(!context.addEvent!"event_a");
+    assert(context.events.length == 0);
+    assert(context.hasError);
+
+    // fetch rest chars.
+    assert(!context.next(c) && context.hasError);
 }
 
 /**
