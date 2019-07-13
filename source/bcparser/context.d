@@ -64,19 +64,19 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
         match if succeeded.
     */
     ParsingResult next(scope return out Element e) @nogc nothrow pure @safe
-    in
     {
-        assert(!hasError);
-    }
-    body
-    {
-        if (hasError_)
+        if (hasError)
         {
-            return ParsingResult.createError("context error");
+            return errorState_;
         }
-        return source_.next(e);
-    }
 
+        immutable result = source_.next(e);
+        if (result.hasError)
+        {
+            errorState_ = result;
+        }
+        return result;
+    }
 
     /**
     add parsing event.
@@ -84,11 +84,22 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     Params:
         name = event name. (static value)
     Returns:
-        true if succeeded.
+        match if succeeded.
     */
-    bool addEvent(string name)() @nogc nothrow @safe
+    ParsingResult addEvent(string name)() @nogc nothrow @safe
     {
-        return allocator_.add(events_, Event(name, source_.position));
+        if (hasError)
+        {
+            return errorState_;
+        }
+
+        if (!allocator_.add(events_, Event(name, source_.position)))
+        {
+            errorState_ = ParsingResult.createError("allocator error");
+            return errorState_;
+        }
+
+        return ParsingResult.match;
     }
 
     /**
@@ -99,7 +110,7 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     */
     @property bool hasError() const @nogc nothrow pure @safe
     {
-        return hasError_;
+        return errorState_.hasError;
     }
 
     /**
@@ -122,8 +133,8 @@ private:
     /// parsing events.
     Event[] events_;
 
-    /// error flag.
-    bool hasError_;
+    /// context error state.
+    ParsingResult errorState_ = ParsingResult.match;
 }
 
 /// backtrack test.
