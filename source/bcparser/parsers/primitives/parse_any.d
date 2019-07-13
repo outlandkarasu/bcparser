@@ -15,7 +15,7 @@ Returns:
 ParsingResult parseAny(C)(scope ref C context) @nogc nothrow @safe if(isContext!C)
 {
     ContextElementType!C c;
-    return ParsingResult.of(context.next(c));
+    return context.next(c);
 }
 
 ///

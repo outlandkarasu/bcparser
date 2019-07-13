@@ -11,6 +11,8 @@ import std.traits :
     ReturnType
 ;
 
+import bcparser.result : ParsingResult;
+
 /**
 Source interface.
 */
@@ -22,7 +24,7 @@ enum bool isSource(S) =
             // get next element.
             alias E = Parameters!(s.next)[0];
             E c;
-            bool result = s.next(c);
+            ParsingResult result = s.next(c);
 
             // next function has an element out parameter.
             static assert(ParameterStorageClassTuple!(typeof(s.next))[0]
@@ -41,7 +43,7 @@ enum bool isSource(S) =
 {
     struct Source
     {
-        bool next(return scope out int e) @nogc nothrow pure @safe;
+        ParsingResult next(return scope out int e) @nogc nothrow pure @safe;
         @property size_t position() const @nogc nothrow pure @safe;
         void moveTo(size_t position) @nogc nothrow pure @safe;
     }
@@ -59,7 +61,7 @@ enum bool isSource(S) =
     {
         @disable this(this);
         @disable this(ref return scope inout NotCopyiableSource rhs) inout;
-        bool next(return scope out int e) @nogc nothrow pure @safe;
+        ParsingResult next(return scope out int e) @nogc nothrow pure @safe;
         @property size_t position() const @nogc nothrow pure @safe;
         void moveTo(size_t position) @nogc nothrow pure @safe;
     }
@@ -81,7 +83,7 @@ if(isSource!S)
 {
     struct Source
     {
-        bool next(return scope out int e) @nogc nothrow pure @safe;
+        ParsingResult next(return scope out int e) @nogc nothrow pure @safe;
         @property size_t position() const @nogc nothrow pure @safe;
         void moveTo(size_t position) @nogc nothrow pure @safe;
     }
@@ -102,7 +104,7 @@ if(isSource!S)
 {
     struct Source
     {
-        bool next(return scope out int e) @nogc nothrow pure @safe;
+        ParsingResult next(return scope out int e) @nogc nothrow pure @safe;
         @property size_t position() const @nogc nothrow pure @safe;
         void moveTo(size_t position) @nogc nothrow pure @safe;
     }

@@ -61,9 +61,9 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     Params:
         e = element dest.
     Returns:
-        true if succeeded.
+        match if succeeded.
     */
-    bool next(scope return out Element e) @nogc nothrow pure @safe
+    ParsingResult next(scope return out Element e) @nogc nothrow pure @safe
     in
     {
         assert(!hasError);
@@ -72,7 +72,7 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     {
         if (hasError_)
         {
-            return false;
+            return ParsingResult.createError("context error");
         }
         return source_.next(e);
     }
