@@ -47,21 +47,15 @@ bool walkEventTree(alias H, S, A)(
         ref scope const(Context!(S, A)) context) @nogc nothrow @safe
     if (isEventHandler!(H, S))
 {
-    auto events = context.events;
-    if (!walkEventTree!H(events, 0))
-    {
-        return false;
-    }
-
-    return events.length == 0;
+    return walkEventArray!H(context.events);
 }
 
 ///
 @nogc nothrow @safe unittest
 {
     import bcparser.memory : CAllocator;
-    import bcparser.context : parse;
-    import bcparser.event : EVENT_END_PREFIX, EVENT_START_PREFIX;
+    import bcparser.context : parse, tryParseNode;
+    import bcparser.result : ParsingResult;
     import bcparser.source : arraySource;
 
     // walk single event
@@ -78,9 +72,10 @@ bool walkEventTree(alias H, S, A)(
     // walk node event
     parse!((ref context) {
         char c;
-        context.addEvent!(EVENT_START_PREFIX ~ "test_node");
-        assert(context.next(c));
-        context.addEvent!(EVENT_END_PREFIX ~ "test_node");
+        context.tryParseNode!("test_node", {
+            assert(context.next(c));
+            return ParsingResult.match;
+        });
 
         assert(walkEventTree!((name, start, end, depth) {
             assert(name == "test_node");
@@ -93,13 +88,15 @@ bool walkEventTree(alias H, S, A)(
     // walk nested node event
     parse!((ref context) {
         char c;
-        context.addEvent!(EVENT_START_PREFIX ~ "test_node");
-        assert(context.next(c));
-        context.addEvent!(EVENT_START_PREFIX ~ "child_node");
-        assert(context.next(c));
-        context.addEvent!(EVENT_END_PREFIX ~ "child_node");
-        assert(context.next(c));
-        context.addEvent!(EVENT_END_PREFIX ~ "test_node");
+        context.tryParseNode!("test_node", {
+            assert(context.next(c));
+            assert(context.tryParseNode!("child_node", {
+                assert(context.next(c));
+                return ParsingResult.match;
+            }));
+            assert(context.next(c));
+            return ParsingResult.match;
+        });
 
         assert(walkEventTree!((name, start, end, depth) {
             if (name == "test_node")
@@ -122,61 +119,64 @@ bool walkEventTree(alias H, S, A)(
     })(arraySource("test"), CAllocator());
 }
 
-@nogc nothrow @safe unittest
+private:
+
+/**
+walk event array function.
+
+Params:
+    H = event handler.
+    S = source type.
+    events = event array.
+Returns:
+    true if succeeded.
+*/
+bool walkEventArray(alias H, S)(const(ParsingEvent!S)[] events) @nogc nothrow @safe if (isEventHandler!(H, S))
 {
-    import bcparser.memory : CAllocator;
-    import bcparser.context : parse;
-    import bcparser.event : EVENT_END_PREFIX, EVENT_START_PREFIX;
-    import bcparser.source : arraySource;
-
-    // error at missing start node.
-    parse!((ref context) {
-        context.addEvent!(EVENT_END_PREFIX ~ "invalid_node");
-        assert(!walkEventTree!((name, start, end, depth) {
-            // never call.
-            assert(false);
-        })(context));
-    })(arraySource("test"), CAllocator());
-
-    // error at missing end node.
-    parse!((ref context) {
-        context.addEvent!(EVENT_START_PREFIX ~ "invalid_node");
-        assert(!walkEventTree!((name, start, end, depth) {
-            // never call.
-            assert(false);
-        })(context));
-    })(arraySource("test"), CAllocator());
-
-    // error at missing nested start node.
-    parse!((ref context) {
-        char c;
-        context.addEvent!(EVENT_START_PREFIX ~ "node");
-        assert(context.next(c));
-        context.addEvent!(EVENT_END_PREFIX ~ "invalid_child");
-        assert(context.next(c));
-        context.addEvent!(EVENT_END_PREFIX ~ "node");
-        assert(!walkEventTree!((name, start, end, depth) {
-            // never call.
-            assert(false);
-        })(context));
-    })(arraySource("test"), CAllocator());
-
-    // error at missing nested end node.
-    parse!((ref context) {
-        char c;
-        context.addEvent!(EVENT_START_PREFIX ~ "node");
-        assert(context.next(c));
-        context.addEvent!(EVENT_START_PREFIX ~ "invalid_child");
-        assert(context.next(c));
-        context.addEvent!(EVENT_END_PREFIX ~ "node");
-        assert(!walkEventTree!((name, start, end, depth) {
-            // never call.
-            assert(false);
-        })(context));
-    })(arraySource("test"), CAllocator());
+    auto tempEvents = events;
+    if (!walkEventArrayWithDepth!H(tempEvents, 0))
+    {
+        return false;
+    }
+    return tempEvents.length == 0;
 }
 
-private:
+@nogc nothrow @safe unittest
+{
+    import bcparser.event : EventType, ParsingEvent;
+    import bcparser.source : ArraySource;
+
+    alias Source = ArraySource!char;
+    alias Event = ParsingEvent!Source;
+
+    // error at missing start node.
+    Event[1] endOnlyEvents = [ Event("invalid_node", 0, EventType.nodeEnd) ];
+    assert(!walkEventArray!((name, start, end, depth) { assert(false); })(
+        endOnlyEvents));
+
+    // error at missing end node.
+    Event[1] startOnlyEvents = [ Event("invalid_node", 0, EventType.nodeEnd) ];
+    assert(!walkEventArray!((name, start, end, depth) { assert(false); })(
+        startOnlyEvents));
+
+    // error at missing nested start node.
+    Event[3] missingNestedStartEvents = [
+        Event("parent_node", 0, EventType.nodeStart),
+        Event("invalid_node", 1, EventType.nodeEnd),
+        Event("parent_node", 2, EventType.nodeEnd),
+    ];
+    assert(!walkEventArray!((name, start, end, depth) { assert(false); })(
+        missingNestedStartEvents));
+
+    // error at missing nested end node.
+    Event[3] missingNestedEndEvents = [
+        Event("parent_node", 0, EventType.nodeStart),
+        Event("invalid_node", 1, EventType.nodeStart),
+        Event("parent_node", 2, EventType.nodeEnd),
+    ];
+    assert(!walkEventArray!((name, start, end, depth) { assert(false); })(
+        missingNestedEndEvents));
+}
 
 /**
 walk event tree.
@@ -189,7 +189,7 @@ Params:
 Returns:
     true if succeeded.
 */
-bool walkEventTree(alias H, S)(
+bool walkEventArrayWithDepth(alias H, S)(
         scope ref const(ParsingEvent!S)[] events,
         size_t depth) @nogc nothrow @safe
     if (isEventHandler!(H, S))
@@ -200,9 +200,9 @@ bool walkEventTree(alias H, S)(
         if (event.isStart)
         {
             immutable start = event.position;
-            immutable name = event.nodeName;
+            immutable name = event.name;
             events = events[1 .. $];
-            if (!walkEventTree!(H, S)(events, depth + 1))
+            if (!walkEventArrayWithDepth!(H, S)(events, depth + 1))
             {
                 return false;
             }
@@ -213,7 +213,7 @@ bool walkEventTree(alias H, S)(
             }
 
             immutable end = events[0];
-            if (!end.isEnd || end.nodeName != name)
+            if (!end.isEnd || end.name != name)
             {
                 return false;
             }
