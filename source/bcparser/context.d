@@ -181,7 +181,7 @@ private:
     assert(!context.next(c) && c == char.init && !context.hasError);
 }
 
-/// test error handling.
+/// test error from allocator handling.
 @nogc nothrow @safe unittest
 {
     import bcparser.memory : ErrorAllocator;
@@ -205,6 +205,28 @@ private:
 
     // fetch rest chars.
     assert(!context.next(c) && context.hasError);
+}
+
+/// test error from source handling.
+@nogc nothrow @safe unittest
+{
+    import bcparser.memory : CAllocator;
+    import bcparser.source : ErrorSource;
+
+    // parse source
+    auto source = ErrorSource!char();
+    auto allocator = CAllocator();
+    auto context = Context!(typeof(source), typeof(allocator))(
+            source, allocator);
+
+    // fetch chars and error.
+    char c;
+    assert(context.next(c).hasError && context.hasError);
+
+    // add parsing event and error.
+    assert(!context.addEvent!"event_a");
+    assert(context.events.length == 0);
+    assert(context.hasError);
 }
 
 /**
