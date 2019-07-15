@@ -3,7 +3,7 @@ Parsing context module.
 */
 module bcparser.context;
 
-import bcparser.event : ParsingEvent;
+import bcparser.event : EventType, ParsingEvent;
 import bcparser.memory : add, isAllocator, release;
 import bcparser.result : ParsingResult;
 import bcparser.source :
@@ -88,18 +88,7 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     */
     ParsingResult addEvent(string name)() @nogc nothrow @safe
     {
-        if (hasError)
-        {
-            return errorState_;
-        }
-
-        if (!allocator_.add(events_, Event(name, source_.position)))
-        {
-            errorState_ = ParsingResult.createError("allocator error");
-            return errorState_;
-        }
-
-        return ParsingResult.match;
+        return addEvent!(name, EventType.single)();
     }
 
     /**
@@ -123,6 +112,31 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     }
 
 private:
+
+    /**
+    add parsing event.
+
+    Params:
+        name = event name.
+        type = event type.
+    Returns:
+        match if succeeded.
+    */
+    ParsingResult addEvent(string name, EventType type)() @nogc nothrow @safe
+    {
+        if (hasError)
+        {
+            return errorState_;
+        }
+
+        if (!allocator_.add(events_, Event(name, source_.position, type)))
+        {
+            errorState_ = ParsingResult.createError("allocator error");
+            return errorState_;
+        }
+
+        return ParsingResult.match;
+    }
 
     /// parsing source.
     S source_;
@@ -167,7 +181,7 @@ private:
     assert(!context.next(c) && c == char.init && !context.hasError);
 }
 
-/// test error handling.
+/// test error from allocator handling.
 @nogc nothrow @safe unittest
 {
     import bcparser.memory : ErrorAllocator;
@@ -191,6 +205,28 @@ private:
 
     // fetch rest chars.
     assert(!context.next(c) && context.hasError);
+}
+
+/// test error from source handling.
+@nogc nothrow @safe unittest
+{
+    import bcparser.memory : CAllocator;
+    import bcparser.source : ErrorSource;
+
+    // parse source
+    auto source = ErrorSource!char();
+    auto allocator = CAllocator();
+    auto context = Context!(typeof(source), typeof(allocator))(
+            source, allocator);
+
+    // fetch chars and error.
+    char c;
+    assert(context.next(c).hasError && context.hasError);
+
+    // add parsing event and error.
+    assert(!context.addEvent!"event_a");
+    assert(context.events.length == 0);
+    assert(context.hasError);
 }
 
 /**
@@ -333,6 +369,66 @@ ParsingResult tryParse(alias F, C)(ref C context) @nogc nothrow @safe
         assert(context.events.length == 1);
         assert(context.events[0].name == "event_2");
         assert(context.events[0].position == 2);
+    })(arraySource("test"), CAllocator());
+}
+
+/**
+try parse node.
+
+Params:
+    name = node name.
+    F = parse function.
+    C = context type.
+    c = context.
+Returns:
+    match if succeeded.
+*/
+ParsingResult tryParseNode(string name, alias F, C)(ref C context) @nogc nothrow @safe
+    if(isContext!C && is(ReturnType!F : ParsingResult))
+{
+    immutable position = context.source_.position;
+    immutable eventsLength = context.events_.length;
+
+    // start node.
+    immutable nodeStartResult = context.addEvent!(name, EventType.nodeStart);
+    if (!nodeStartResult)
+    {
+        return nodeStartResult;
+    }
+
+    // parse.
+    immutable result = F();
+    if (!result)
+    {
+        // parse failed. backtrack.
+        context.source_.moveTo(position);
+        if (eventsLength < context.events_.length)
+        {
+            context.allocator_.release(context.events_, eventsLength);
+        }
+        return result;
+    }
+
+    // end node.
+    return context.addEvent!(name, EventType.nodeEnd);
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser.memory : CAllocator;
+    import bcparser.source : arraySource;
+
+    parse!((ref context) {
+        // accept and backtrack empty.
+        assert(context.tryParseNode!("test_node", () => ParsingResult.match));
+        assert(context.events.length == 2);
+        assert(context.events[0].name == "test_node");
+        assert(context.events[0].isStart);
+        assert(context.events[0].position == 0);
+        assert(context.events[1].name == "test_node");
+        assert(context.events[1].isEnd);
+        assert(context.events[1].position == 0);
     })(arraySource("test"), CAllocator());
 }
 

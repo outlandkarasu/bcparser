@@ -3,8 +3,7 @@ Event parser module.
 */
 module bcparser.parsers.composites.parse_event;
 
-import bcparser.context : isContext, tryParse;
-import bcparser.event : EVENT_END_PREFIX, EVENT_START_PREFIX;
+import bcparser.context : isContext, tryParseNode;
 import bcparser.parsers.traits : isPrimitiveParser;
 import bcparser.result : ParsingResult;
 
@@ -22,18 +21,7 @@ Returns:
 ParsingResult parseEvent(string name, alias P, C)(ref C context) @nogc nothrow @safe
     if(isContext!C && isPrimitiveParser!(P, C))
 {
-    return context.tryParse!({
-        context.addEvent!(EVENT_START_PREFIX ~ name);
-
-        immutable result = P(context);
-        if (!result)
-        {
-            return result;
-        }
-
-        context.addEvent!(EVENT_END_PREFIX ~ name);
-        return result;
-    });
+    return context.tryParseNode!(name, () => P(context));
 }
 
 ///
@@ -43,7 +31,7 @@ ParsingResult parseEvent(string name, alias P, C)(ref C context) @nogc nothrow @
     import bcparser.source : arraySource;
     import bcparser.context : parse;
     import bcparser.parsers : parseChar;
-    import bcparser.event : ParsingEvent;
+    import bcparser.event : EventType, ParsingEvent;
 
     parse!((ref context) {
         alias Ctx = typeof(context);
@@ -51,8 +39,8 @@ ParsingResult parseEvent(string name, alias P, C)(ref C context) @nogc nothrow @
         // true if matched.
         assert(context.parseEvent!("testEvent", (ref c) => c.parseChar('t')));
         assert(context.events.length == 2);
-        assert(context.events[0] == Ctx.Event("start.testEvent", 0));
-        assert(context.events[1] == Ctx.Event("end.testEvent", 1));
+        assert(context.events[0] == Ctx.Event("testEvent", 0, EventType.nodeStart));
+        assert(context.events[1] == Ctx.Event("testEvent", 1, EventType.nodeEnd));
     })(arraySource("test"), CAllocator());
 
     parse!((ref context) {

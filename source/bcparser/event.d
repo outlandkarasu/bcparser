@@ -6,14 +6,19 @@ module bcparser.event;
 import bcparser.source : isSource, SourcePositionType;
 
 /**
-Event start prefix.
+event type.
 */
-enum EVENT_START_PREFIX = "start.";
+enum EventType
+{
+    /// single event.
+    single,
 
-/**
-Event end prefix.
-*/
-enum EVENT_END_PREFIX = "end.";
+    /// node start.
+    nodeStart,
+
+    /// node end.
+    nodeEnd,
+}
 
 /**
 Parsing event.
@@ -46,7 +51,7 @@ struct ParsingEvent(S) if(isSource!S)
         */
         bool isStart() 
         {
-            return name.startsWith!EVENT_START_PREFIX;
+            return type_ == EventType.nodeStart;
         }
 
         /**
@@ -55,7 +60,7 @@ struct ParsingEvent(S) if(isSource!S)
         */
         bool isEnd()
         {
-            return name.startsWith!EVENT_END_PREFIX;
+            return type_ == EventType.nodeEnd;
         }
 
         /**
@@ -66,27 +71,10 @@ struct ParsingEvent(S) if(isSource!S)
         {
             return isStart || isEnd;
         }
-
-        /**
-        Returns:
-            node if this is node event else empty string.
-        */
-        string nodeName() return
-        {
-            if (isStart)
-            {
-                return name[EVENT_START_PREFIX.length .. $];
-            }
-            else if (isEnd)
-            {
-                return name[EVENT_END_PREFIX.length .. $];
-            }
-            else
-            {
-                return null;
-            }
-        }
     }
+
+private:
+    EventType type_;
 }
 
 ///
@@ -96,11 +84,11 @@ struct ParsingEvent(S) if(isSource!S)
     alias Source = ArraySource!char;
     alias Event = ParsingEvent!Source;
 
-    immutable start = Event(EVENT_START_PREFIX ~ "test");
+    immutable start = Event("test", 0, EventType.nodeStart);
     assert(start.isStart);
     assert(!start.isEnd);
     assert(start.isNode);
-    assert(start.nodeName == "test");
+    assert(start.name == "test");
 }
 
 ///
@@ -110,40 +98,24 @@ struct ParsingEvent(S) if(isSource!S)
     alias Source = ArraySource!char;
     alias Event = ParsingEvent!Source;
 
-    immutable end = Event(EVENT_END_PREFIX ~ "test");
+    immutable end = Event("test", 0, EventType.nodeEnd);
     assert(!end.isStart);
     assert(end.isEnd);
     assert(end.isNode);
-    assert(end.nodeName == "test");
-}
-
-private:
-
-/**
-start with by string literal.
-
-Params:
-    P = prefix
-    s = target string.
-Returns:
-    true if s starts with P.
-*/
-bool startsWith(string P)(scope string s) @nogc nothrow pure @safe
-{
-    if (s.length < P.length)
-    {
-        return false;
-    }
-    return s[0 .. P.length] == P[];
+    assert(end.name == "test");
 }
 
 ///
 @nogc nothrow pure @safe unittest
 {
-    assert(startsWith!"test"("test"));
-    assert(startsWith!"test"("testa"));
-    assert(!startsWith!"test"(""));
-    assert(!startsWith!"test"("tes"));
-    assert(!startsWith!"test"("tesst"));
+    import bcparser.source : ArraySource;
+    alias Source = ArraySource!char;
+    alias Event = ParsingEvent!Source;
+
+    immutable single = Event("test", 0, EventType.single);
+    assert(!single.isStart);
+    assert(!single.isEnd);
+    assert(!single.isNode);
+    assert(single.name == "test");
 }
 
