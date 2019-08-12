@@ -14,7 +14,8 @@
             {
                 "name": "bc",
                 "targetType": "executable",
-                "dflags": ["-betterC"]
+                "buildOptions": ["betterC"]
             }
         ]
 }
+

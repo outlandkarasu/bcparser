@@ -48,7 +48,11 @@ enum bool isPrimitiveParserFunction(P) =
     static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) => true)));
     static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) @system => ParsingResult.match)));
     static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) => ParsingResult.createError(new string(5)))));
-    static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) { throw new Exception("error"); })));
+
+    version (D_Exceptions)
+    {
+        static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) { throw new Exception("error"); })));
+    }
 
     // functions tests.
     ParsingResult parser(ref Ctx s) @nogc nothrow pure @safe { return ParsingResult.match; }

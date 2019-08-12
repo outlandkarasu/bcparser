@@ -4,3 +4,9 @@
 
 # bcparser
 
+## BetterC unit test
+
+```sh
+$ dub --config=bc --build=unittest
+```
+
