@@ -5,6 +5,7 @@ module bcparser.examples.json;
 
 import bcparser :
     parseChar,
+    parseString,
     parseSequence,
     parseSet,
     parseZeroOrMore
@@ -265,6 +266,90 @@ auto parseValueSeparator(C)(ref C context) @nogc nothrow @safe
     arraySource(" \t\r\n,\t\r\n ").parse!((ref context) {
         assert(context.parseValueSeparator);
         assert(!context.parseValueSeparator);
+
+        char c;
+        assert(!context.next(c));
+    })(CAllocator());
+}
+
+/**
+Parse false.
+
+Params:
+    C = context type.
+    context = parsing context.
+Returns:
+    parsing result.
+*/
+auto parseFalse(C)(ref C context) @nogc nothrow @safe
+{
+    return context.parseString("false");
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource("false").parse!((ref context) {
+        assert(context.parseFalse);
+        assert(!context.parseFalse);
+
+        char c;
+        assert(!context.next(c));
+    })(CAllocator());
+}
+ 
+/**
+Parse true.
+
+Params:
+    C = context type.
+    context = parsing context.
+Returns:
+    parsing result.
+*/
+auto parseTrue(C)(ref C context) @nogc nothrow @safe
+{
+    return context.parseString("true");
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource("true").parse!((ref context) {
+        assert(context.parseTrue);
+        assert(!context.parseTrue);
+
+        char c;
+        assert(!context.next(c));
+    })(CAllocator());
+}
+ 
+/**
+Parse null.
+
+Params:
+    C = context type.
+    context = parsing context.
+Returns:
+    parsing result.
+*/
+auto parseNull(C)(ref C context) @nogc nothrow @safe
+{
+    return context.parseString("null");
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource("null").parse!((ref context) {
+        assert(context.parseNull);
+        assert(!context.parseNull);
 
         char c;
         assert(!context.next(c));
