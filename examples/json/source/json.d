@@ -20,7 +20,7 @@ Params:
 Returns:
     parsing result.
 */
-auto parseWhiteSpace(C)(ref C context) @nogc nothrow @safe
+auto parseWhiteSpace(C)(scope ref C context) @nogc nothrow @safe
 {
     return parseSet(context, "\x20\x09\x0a\x0d");
 }
@@ -30,7 +30,7 @@ auto parseWhiteSpace(C)(ref C context) @nogc nothrow @safe
 {
     import bcparser : arraySource, CAllocator, parse;
 
-    arraySource(" \t\r\n.").parse!((ref context) {
+    arraySource(" \t\r\n.").parse!((scope ref context) {
         assert(parseWhiteSpace(context));
         assert(parseWhiteSpace(context));
         assert(parseWhiteSpace(context));
@@ -51,9 +51,9 @@ Params:
 Returns:
     parsing result.
 */
-auto parseWhiteSpaces(C)(ref C context) @nogc nothrow @safe
+auto parseWhiteSpaces(C)(scope ref C context) @nogc nothrow @safe
 {
-    return parseZeroOrMore!(parseWhiteSpace)(context);
+    return context.parseZeroOrMore!parseWhiteSpace;
 }
 
 ///
@@ -61,7 +61,7 @@ auto parseWhiteSpaces(C)(ref C context) @nogc nothrow @safe
 {
     import bcparser : arraySource, CAllocator, parse;
 
-    arraySource(" \t\r\n.").parse!((ref context) {
+    arraySource(" \t\r\n.").parse!((scope ref context) {
         assert(parseWhiteSpaces(context));
 
         // any space not found but succeeded.
@@ -82,11 +82,11 @@ Params:
 Returns:
     parsing result.
 */
-private auto parseStructuralCharacter(char CH, C)(ref C context) @nogc nothrow @safe
+private auto parseStructuralCharacter(char CH, C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseSequence!(
         parseWhiteSpaces,
-        (ref c) => c.parseChar(CH),
+        (scope ref c) => c.parseChar(CH),
         parseWhiteSpaces);
 }
 
@@ -95,7 +95,7 @@ private auto parseStructuralCharacter(char CH, C)(ref C context) @nogc nothrow @
 {
     import bcparser : arraySource, CAllocator, parse;
 
-    arraySource(" \t\r\n.\t\r\n a").parse!((ref context) {
+    arraySource(" \t\r\n.\t\r\n a").parse!((scope ref context) {
         assert(context.parseStructuralCharacter!'.');
         assert(context.parseStructuralCharacter!'a');
 
@@ -113,7 +113,7 @@ Params:
 Returns:
     parsing result.
 */
-auto parseBeginArray(C)(ref C context) @nogc nothrow @safe
+auto parseBeginArray(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!'[';
 }
@@ -123,7 +123,7 @@ auto parseBeginArray(C)(ref C context) @nogc nothrow @safe
 {
     import bcparser : arraySource, CAllocator, parse;
 
-    arraySource(" \t\r\n[\t\r\n ").parse!((ref context) {
+    arraySource(" \t\r\n[\t\r\n ").parse!((scope ref context) {
         assert(context.parseBeginArray);
         assert(!context.parseBeginArray);
 
@@ -141,7 +141,7 @@ Params:
 Returns:
     parsing result.
 */
-auto parseEndArray(C)(ref C context) @nogc nothrow @safe
+auto parseEndArray(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!']';
 }
@@ -151,7 +151,7 @@ auto parseEndArray(C)(ref C context) @nogc nothrow @safe
 {
     import bcparser : arraySource, CAllocator, parse;
 
-    arraySource(" \t\r\n]\t\r\n ").parse!((ref context) {
+    arraySource(" \t\r\n]\t\r\n ").parse!((scope ref context) {
         assert(context.parseEndArray);
         assert(!context.parseEndArray);
 
@@ -169,7 +169,7 @@ Params:
 Returns:
     parsing result.
 */
-auto parseBeginObject(C)(ref C context) @nogc nothrow @safe
+auto parseBeginObject(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!'{';
 }
@@ -179,7 +179,7 @@ auto parseBeginObject(C)(ref C context) @nogc nothrow @safe
 {
     import bcparser : arraySource, CAllocator, parse;
 
-    arraySource(" \t\r\n{\t\r\n ").parse!((ref context) {
+    arraySource(" \t\r\n{\t\r\n ").parse!((scope ref context) {
         assert(context.parseBeginObject);
         assert(!context.parseBeginObject);
 
@@ -197,7 +197,7 @@ Params:
 Returns:
     parsing result.
 */
-auto parseEndObject(C)(ref C context) @nogc nothrow @safe
+auto parseEndObject(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!'}';
 }
@@ -207,7 +207,7 @@ auto parseEndObject(C)(ref C context) @nogc nothrow @safe
 {
     import bcparser : arraySource, CAllocator, parse;
 
-    arraySource(" \t\r\n}\t\r\n ").parse!((ref context) {
+    arraySource(" \t\r\n}\t\r\n ").parse!((scope ref context) {
         assert(context.parseEndObject);
         assert(!context.parseEndObject);
 
@@ -225,7 +225,7 @@ Params:
 Returns:
     parsing result.
 */
-auto parseNameSeparator(C)(ref C context) @nogc nothrow @safe
+auto parseNameSeparator(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!':';
 }
@@ -235,7 +235,7 @@ auto parseNameSeparator(C)(ref C context) @nogc nothrow @safe
 {
     import bcparser : arraySource, CAllocator, parse;
 
-    arraySource(" \t\r\n:\t\r\n ").parse!((ref context) {
+    arraySource(" \t\r\n:\t\r\n ").parse!((scope ref context) {
         assert(context.parseNameSeparator);
         assert(!context.parseNameSeparator);
 
@@ -253,7 +253,7 @@ Params:
 Returns:
     parsing result.
 */
-auto parseValueSeparator(C)(ref C context) @nogc nothrow @safe
+auto parseValueSeparator(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!',';
 }
@@ -263,7 +263,7 @@ auto parseValueSeparator(C)(ref C context) @nogc nothrow @safe
 {
     import bcparser : arraySource, CAllocator, parse;
 
-    arraySource(" \t\r\n,\t\r\n ").parse!((ref context) {
+    arraySource(" \t\r\n,\t\r\n ").parse!((scope ref context) {
         assert(context.parseValueSeparator);
         assert(!context.parseValueSeparator);
 
@@ -281,7 +281,7 @@ Params:
 Returns:
     parsing result.
 */
-auto parseFalse(C)(ref C context) @nogc nothrow @safe
+auto parseFalse(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseString("false");
 }
@@ -291,7 +291,7 @@ auto parseFalse(C)(ref C context) @nogc nothrow @safe
 {
     import bcparser : arraySource, CAllocator, parse;
 
-    arraySource("false").parse!((ref context) {
+    arraySource("false").parse!((scope ref context) {
         assert(context.parseFalse);
         assert(!context.parseFalse);
 
@@ -309,7 +309,7 @@ Params:
 Returns:
     parsing result.
 */
-auto parseTrue(C)(ref C context) @nogc nothrow @safe
+auto parseTrue(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseString("true");
 }
@@ -319,7 +319,7 @@ auto parseTrue(C)(ref C context) @nogc nothrow @safe
 {
     import bcparser : arraySource, CAllocator, parse;
 
-    arraySource("true").parse!((ref context) {
+    arraySource("true").parse!((scope ref context) {
         assert(context.parseTrue);
         assert(!context.parseTrue);
 
@@ -337,7 +337,7 @@ Params:
 Returns:
     parsing result.
 */
-auto parseNull(C)(ref C context) @nogc nothrow @safe
+auto parseNull(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseString("null");
 }
@@ -347,7 +347,7 @@ auto parseNull(C)(ref C context) @nogc nothrow @safe
 {
     import bcparser : arraySource, CAllocator, parse;
 
-    arraySource("null").parse!((ref context) {
+    arraySource("null").parse!((scope ref context) {
         assert(context.parseNull);
         assert(!context.parseNull);
 
