@@ -356,3 +356,31 @@ auto parseNull(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
  
+/**
+Parse minus.
+
+Params:
+    C = context type.
+    context = parsing context.
+Returns:
+    parsing result.
+*/
+auto parseMinus(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseChar('-');
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource("-").parse!((scope ref context) {
+        assert(context.parseMinus);
+        assert(!context.parseMinus);
+
+        char c;
+        assert(!context.next(c));
+    })(CAllocator());
+}
+
