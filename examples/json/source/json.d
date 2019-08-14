@@ -441,6 +441,34 @@ auto parseZero(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /**
+Parse decimal point.
+
+Params:
+    C = context type.
+    context = parsing context.
+Returns:
+    parsing result.
+*/
+auto parseDecimalPoint(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseChar('.');
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource(".").parse!((scope ref context) {
+        assert(context.parseDecimalPoint);
+        assert(!context.parseDecimalPoint);
+
+        char c;
+        assert(!context.next(c));
+    })(CAllocator());
+}
+
+/**
 Parse exp.
 
 Params:
