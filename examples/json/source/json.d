@@ -412,3 +412,31 @@ auto parsePlus(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
 
+/**
+Parse zero.
+
+Params:
+    C = context type.
+    context = parsing context.
+Returns:
+    parsing result.
+*/
+auto parseZero(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseChar('0');
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource("0").parse!((scope ref context) {
+        assert(context.parseZero);
+        assert(!context.parseZero);
+
+        char c;
+        assert(!context.next(c));
+    })(CAllocator());
+}
+
