@@ -13,15 +13,7 @@ import bcparser :
     parseZeroOrMore
 ;
 
-/**
-Parse white space.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse a white space.
 auto parseWhiteSpace(C)(scope ref C context) @nogc nothrow @safe
 {
     return parseSet(context, "\x20\x09\x0a\x0d");
@@ -44,15 +36,7 @@ auto parseWhiteSpace(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
 
-/**
-Parse white spaces.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse white spaces.
 auto parseWhiteSpaces(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseZeroOrMore!parseWhiteSpace;
@@ -74,16 +58,7 @@ auto parseWhiteSpaces(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
 
-/**
-Parse a structural characer with white spaces.
-
-Params:
-    CH = character literal.
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse a structural characer with white spaces.
 private auto parseStructuralCharacter(char CH, C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseSequence!(
@@ -106,15 +81,7 @@ private auto parseStructuralCharacter(char CH, C)(scope ref C context) @nogc not
     })(CAllocator());
 }
  
-/**
-Parse begin-array.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse begin-array.
 auto parseBeginArray(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!'[';
@@ -134,15 +101,7 @@ auto parseBeginArray(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
  
-/**
-Parse end-array.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse end-array.
 auto parseEndArray(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!']';
@@ -162,15 +121,7 @@ auto parseEndArray(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
  
-/**
-Parse begin-object.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse begin-object.
 auto parseBeginObject(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!'{';
@@ -190,15 +141,7 @@ auto parseBeginObject(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
  
-/**
-Parse end-object.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse end-object.
 auto parseEndObject(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!'}';
@@ -218,15 +161,7 @@ auto parseEndObject(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
  
-/**
-Parse name-separator.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse name-separator.
 auto parseNameSeparator(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!':';
@@ -246,15 +181,7 @@ auto parseNameSeparator(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
  
-/**
-Parse value-separator.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse value-separator.
 auto parseValueSeparator(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!',';
@@ -274,15 +201,7 @@ auto parseValueSeparator(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
 
-/**
-Parse false.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse false.
 auto parseFalse(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseString("false");
@@ -302,15 +221,7 @@ auto parseFalse(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
  
-/**
-Parse true.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse true.
 auto parseTrue(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseString("true");
@@ -330,15 +241,7 @@ auto parseTrue(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
  
-/**
-Parse null.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse null.
 auto parseNull(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseString("null");
@@ -358,15 +261,7 @@ auto parseNull(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
 
-/**
-Parse plus.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse plus.
 auto parsePlus(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChar('+');
@@ -387,15 +282,7 @@ auto parsePlus(C)(scope ref C context) @nogc nothrow @safe
 }
 
  
-/**
-Parse minus.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse minus.
 auto parseMinus(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChar('-');
@@ -415,15 +302,7 @@ auto parseMinus(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
 
-/**
-Parse zero.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse zero.
 auto parseZero(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChar('0');
@@ -443,15 +322,7 @@ auto parseZero(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
 
-/**
-Parse decimal point.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse decimal point.
 auto parseDecimalPoint(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChar('.');
@@ -471,15 +342,7 @@ auto parseDecimalPoint(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
 
-/**
-Parse an exp character.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
+/// Parse an exp character.
 auto parseE(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseSet("eE");
@@ -500,9 +363,7 @@ auto parseE(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
 
-/**
-Parse an digit.
-*/
+/// Parse an digit.
 auto parseDigit(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseRange('0', '9');
@@ -531,9 +392,7 @@ auto parseDigit(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
 
-/**
-Parse an digit 1-9.
-*/
+/// Parse an digit 1-9.
 auto parseDigit19(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseRange('1', '9');
@@ -545,16 +404,16 @@ auto parseDigit19(C)(scope ref C context) @nogc nothrow @safe
     import bcparser : arraySource, CAllocator, parse;
 
     arraySource("1234567890").parse!((scope ref context) {
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(!context.parseDigit);
+        assert(context.parseDigit19);
+        assert(context.parseDigit19);
+        assert(context.parseDigit19);
+        assert(context.parseDigit19);
+        assert(context.parseDigit19);
+        assert(context.parseDigit19);
+        assert(context.parseDigit19);
+        assert(context.parseDigit19);
+        assert(context.parseDigit19);
+        assert(!context.parseDigit19);
 
         char c;
         assert(context.next(c) && c == '0');
