@@ -6,6 +6,7 @@ https://tools.ietf.org/html/rfc8259
 module bcparser.examples.json; 
 import bcparser :
     parseChar,
+    parseRange,
     parseString,
     parseSequence,
     parseSet,
@@ -356,34 +357,6 @@ auto parseNull(C)(scope ref C context) @nogc nothrow @safe
         assert(!context.next(c));
     })(CAllocator());
 }
- 
-/**
-Parse minus.
-
-Params:
-    C = context type.
-    context = parsing context.
-Returns:
-    parsing result.
-*/
-auto parseMinus(C)(scope ref C context) @nogc nothrow @safe
-{
-    return context.parseChar('-');
-}
-
-///
-@nogc nothrow @safe unittest
-{
-    import bcparser : arraySource, CAllocator, parse;
-
-    arraySource("-").parse!((scope ref context) {
-        assert(context.parseMinus);
-        assert(!context.parseMinus);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
-}
 
 /**
 Parse plus.
@@ -407,6 +380,35 @@ auto parsePlus(C)(scope ref C context) @nogc nothrow @safe
     arraySource("+").parse!((scope ref context) {
         assert(context.parsePlus);
         assert(!context.parsePlus);
+
+        char c;
+        assert(!context.next(c));
+    })(CAllocator());
+}
+
+ 
+/**
+Parse minus.
+
+Params:
+    C = context type.
+    context = parsing context.
+Returns:
+    parsing result.
+*/
+auto parseMinus(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseChar('-');
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource("-").parse!((scope ref context) {
+        assert(context.parseMinus);
+        assert(!context.parseMinus);
 
         char c;
         assert(!context.next(c));
@@ -470,7 +472,7 @@ auto parseDecimalPoint(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /**
-Parse exp.
+Parse an exp character.
 
 Params:
     C = context type.
@@ -478,7 +480,7 @@ Params:
 Returns:
     parsing result.
 */
-auto parseExp(C)(scope ref C context) @nogc nothrow @safe
+auto parseE(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseSet("eE");
 }
@@ -489,12 +491,43 @@ auto parseExp(C)(scope ref C context) @nogc nothrow @safe
     import bcparser : arraySource, CAllocator, parse;
 
     arraySource("eEf").parse!((scope ref context) {
-        assert(context.parseExp);
-        assert(context.parseExp);
-        assert(!context.parseExp);
+        assert(context.parseE);
+        assert(context.parseE);
+        assert(!context.parseE);
 
         char c;
         assert(context.next(c) && c == 'f');
+    })(CAllocator());
+}
+
+/**
+Parse an digit.
+*/
+auto parseDigit(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseRange('0', '9');
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource("0123456789.").parse!((scope ref context) {
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(!context.parseDigit);
+
+        char c;
+        assert(context.next(c) && c == '.');
     })(CAllocator());
 }
 
