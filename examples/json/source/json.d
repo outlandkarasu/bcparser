@@ -531,3 +531,33 @@ auto parseDigit(C)(scope ref C context) @nogc nothrow @safe
     })(CAllocator());
 }
 
+/**
+Parse an digit 1-9.
+*/
+auto parseDigit19(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseRange('1', '9');
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource("1234567890").parse!((scope ref context) {
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(context.parseDigit);
+        assert(!context.parseDigit);
+
+        char c;
+        assert(context.next(c) && c == '0');
+    })(CAllocator());
+}
+
