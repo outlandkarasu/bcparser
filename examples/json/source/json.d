@@ -471,3 +471,37 @@ auto parseExp(C)(scope ref C context) @nogc nothrow @safe
     }
 }
 
+/// parse frac.
+auto parseFrac(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseSequence!(
+        parseDecimalPoint, 
+        parseOneOrMore!(parseDigit!C, C));
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource(".1234567890,.0123456789,.0000,.0").parse!((scope ref context) {
+        char c;
+        assert(context.parseFrac);
+        assert(context.next(c) && c == ',');
+        assert(context.parseFrac);
+        assert(context.next(c) && c == ',');
+        assert(context.parseFrac);
+        assert(context.next(c) && c == ',');
+        assert(context.parseFrac);
+        assert(!context.parseFrac);
+        assert(!context.next(c));
+    })(CAllocator());
+
+    static foreach(s; ["", "1234", "..1234", "."])
+    {
+        arraySource(s).parse!((scope ref context) {
+            assert(!context.parseFrac);
+        })(CAllocator());
+    }
+}
+
