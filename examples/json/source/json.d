@@ -428,8 +428,8 @@ auto parseExp(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseSequence!(
         parseE, 
-        parseOption!(parseChoice!(parseMinus, parsePlus), C),
-        parseOneOrMore!(parseDigit!C, C));
+        parseOption!(parseChoice!(parseMinus, parsePlus)),
+        parseOneOrMore!parseDigit);
 }
 
 ///
@@ -476,7 +476,7 @@ auto parseFrac(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseSequence!(
         parseDecimalPoint, 
-        parseOneOrMore!(parseDigit!C, C));
+        parseOneOrMore!parseDigit);
 }
 
 ///
@@ -505,12 +505,12 @@ auto parseFrac(C)(scope ref C context) @nogc nothrow @safe
     }
 }
 
-/// parse int.
+/// parse an int.
 auto parseInt(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChoice!(
         parseZero,
-        parseSequence!(parseDigit19, parseZeroOrMore!(parseDigit, C)));
+        parseSequence!(parseDigit19, parseZeroOrMore!parseDigit));
 }
 
 ///
@@ -535,6 +535,42 @@ auto parseInt(C)(scope ref C context) @nogc nothrow @safe
     {
         arraySource(s).parse!((scope ref context) {
             assert(!context.parseInt);
+        })(CAllocator());
+    }
+}
+
+/// parse a number.
+auto parseNumber(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseSequence!(
+        parseOption!parseMinus,
+        parseInt,
+        parseOption!parseFrac,
+        parseOption!parseExp);
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource("0,1,123,1234567890").parse!((scope ref context) {
+        char c;
+        assert(context.parseNumber);
+        assert(context.next(c) && c == ',');
+        assert(context.parseNumber);
+        assert(context.next(c) && c == ',');
+        assert(context.parseNumber);
+        assert(context.next(c) && c == ',');
+        assert(context.parseNumber);
+        assert(!context.parseNumber);
+        assert(!context.next(c));
+    })(CAllocator());
+
+    static foreach(s; ["", "abc", ".1234"])
+    {
+        arraySource(s).parse!((scope ref context) {
+            assert(!context.parseNumber);
         })(CAllocator());
     }
 }
