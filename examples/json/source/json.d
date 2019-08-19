@@ -6,6 +6,9 @@ https://tools.ietf.org/html/rfc8259
 module bcparser.examples.json; 
 import bcparser :
     parseChar,
+    parseChoice,
+    parseOption,
+    parseOneOrMore,
     parseRange,
     parseString,
     parseSequence,
@@ -418,5 +421,53 @@ auto parseDigit19(C)(scope ref C context) @nogc nothrow @safe
         char c;
         assert(context.next(c) && c == '0');
     })(CAllocator());
+}
+
+/// parse exp.
+auto parseExp(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseSequence!(
+        parseE, 
+        parseOption!(parseChoice!(parseMinus, parsePlus), C),
+        parseOneOrMore!(parseDigit!C, C));
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource("e+0123,E+123,e-9870,E-9870").parse!((scope ref context) {
+        char c;
+        assert(context.parseExp);
+        assert(context.next(c) && c == ',');
+        assert(context.parseExp);
+        assert(context.next(c) && c == ',');
+        assert(context.parseExp);
+        assert(context.next(c) && c == ',');
+        assert(context.parseExp);
+        assert(!context.parseExp);
+        assert(!context.next(c));
+    })(CAllocator());
+
+    arraySource("e0123,E123,e9870,E9870").parse!((scope ref context) {
+        char c;
+        assert(context.parseExp);
+        assert(context.next(c) && c == ',');
+        assert(context.parseExp);
+        assert(context.next(c) && c == ',');
+        assert(context.parseExp);
+        assert(context.next(c) && c == ',');
+        assert(context.parseExp);
+        assert(!context.parseExp);
+        assert(!context.next(c));
+    })(CAllocator());
+
+    static foreach(s; ["f1234", "1234", "+1234", "-1234"])
+    {
+        arraySource(s).parse!((scope ref context) {
+            assert(!context.parseExp);
+        })(CAllocator());
+    }
 }
 
