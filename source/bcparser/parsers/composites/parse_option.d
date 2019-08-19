@@ -17,7 +17,7 @@ Params:
 Returns:
     true if no have error.
 */
-ParsingResult parseOption(alias P, C)(ref C context) @nogc nothrow @safe
+ParsingResult parseOption(alias P, C)(scope ref C context) @nogc nothrow @safe
     if(isContext!C && isPrimitiveParser!(P, C))
 {
     // discard result.

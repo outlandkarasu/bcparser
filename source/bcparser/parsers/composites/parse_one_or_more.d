@@ -17,7 +17,7 @@ Params:
 Returns:
     true if matched one ore more times.
 */
-ParsingResult parseOneOrMore(alias P, C)(ref C context) @nogc nothrow @safe
+ParsingResult parseOneOrMore(alias P, C)(scope ref C context) @nogc nothrow @safe
     if(isContext!C && isPrimitiveParser!(P, C))
 {
     ParsingResult headResult = P(context);

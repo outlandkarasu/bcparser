@@ -17,7 +17,7 @@ Params:
 Returns:
     true if unmatched.
 */
-ParsingResult parseNot(alias P, C)(ref C context) @nogc nothrow @safe
+ParsingResult parseNot(alias P, C)(scope ref C context) @nogc nothrow @safe
     if(isContext!C && isPrimitiveParser!(P, C))
 {
     ParsingResult result;

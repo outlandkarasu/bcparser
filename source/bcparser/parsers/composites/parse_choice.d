@@ -24,7 +24,7 @@ template parseChoice(P...)
     Returns:
         true if matched all parsers.
     */
-    ParsingResult parseChoice(C)(ref C context) @nogc nothrow @safe
+    ParsingResult parseChoice(C)(scope ref C context) @nogc nothrow @safe
         if(isContext!C && is(typeof(
         {
             foreach (p; P)

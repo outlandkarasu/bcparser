@@ -24,7 +24,7 @@ template parseSequence(P...)
     Returns:
         true if matched all parsers.
     */
-    ParsingResult parseSequence(C)(ref C context) @nogc nothrow @safe
+    ParsingResult parseSequence(C)(scope ref C context) @nogc nothrow @safe
         if(isContext!C && is(typeof(
         {
             foreach (p; P)
