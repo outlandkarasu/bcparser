@@ -17,12 +17,25 @@ Params:
 Returns:
     true if no have error.
 */
-ParsingResult parseZeroOrMore(alias P, C)(scope ref C context) @nogc nothrow @safe
-    if(isContext!C && isPrimitiveParser!(P, C))
+template parseZeroOrMore(alias P)
 {
-    ParsingResult result;
-    while ((result = P(context)).isMatch) {}
-    return ParsingResult.match | result;
+    /**
+    parse using zero or more parser.
+
+    Params:
+        P = inner parser.
+        C = context type.
+        source = parsing source.
+    Returns:
+        true if no have error.
+    */
+    ParsingResult parseZeroOrMore(C)(scope ref C context) @nogc nothrow @safe
+        if(isContext!C && isPrimitiveParser!(P, C))
+    {
+        ParsingResult result;
+        while ((result = P(context)).isMatch) {}
+        return ParsingResult.match | result;
+    }
 }
 
 ///

@@ -13,15 +13,23 @@ parse using optional parser.
 Params:
     name = event name.
     P = inner parser.
-    C = context type.
-    source = parsing source.
-Returns:
-    true if no have error.
 */
-ParsingResult parseEvent(string name, alias P, C)(scope ref C context) @nogc nothrow @safe
-    if(isContext!C && isPrimitiveParser!(P, C))
+template parseEvent(string name, alias P)
 {
-    return context.tryParseNode!(name, () => P(context));
+    /**
+    parse using optional parser.
+
+    Params:
+        C = context type.
+        context = parsing context.
+    Returns:
+        true if no have error.
+    */
+    ParsingResult parseEvent(C)(scope ref C context) @nogc nothrow @safe
+        if(isContext!C && isPrimitiveParser!(P, C))
+    {
+        return context.tryParseNode!(name, () => P(context));
+    }
 }
 
 ///

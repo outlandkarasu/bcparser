@@ -12,17 +12,25 @@ parse using optional parser.
 
 Params:
     P = inner parser.
-    C = context type.
-    source = parsing source.
-Returns:
-    true if no have error.
 */
-ParsingResult parseOption(alias P, C)(scope ref C context) @nogc nothrow @safe
-    if(isContext!C && isPrimitiveParser!(P, C))
+template parseOption(alias P)
 {
-    // discard result.
-    auto result = P(context);
-    return result | ParsingResult.match;
+    /**
+    parse using optional parser.
+
+    Params:
+        C = context type.
+        context = parsing context.
+    Returns:
+        true if no have error.
+    */
+    ParsingResult parseOption(C)(scope ref C context) @nogc nothrow @safe
+        if(isContext!C && isPrimitiveParser!(P, C))
+    {
+        // discard result.
+        auto result = P(context);
+        return result | ParsingResult.match;
+    }
 }
 
 ///
