@@ -505,3 +505,37 @@ auto parseFrac(C)(scope ref C context) @nogc nothrow @safe
     }
 }
 
+/// parse int.
+auto parseInt(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseChoice!(
+        parseZero,
+        parseSequence!(parseDigit19, parseZeroOrMore!(parseDigit, C)));
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    import bcparser : arraySource, CAllocator, parse;
+
+    arraySource("0,1,123,1234567890").parse!((scope ref context) {
+        char c;
+        assert(context.parseInt);
+        assert(context.next(c) && c == ',');
+        assert(context.parseInt);
+        assert(context.next(c) && c == ',');
+        assert(context.parseInt);
+        assert(context.next(c) && c == ',');
+        assert(context.parseInt);
+        assert(!context.parseInt);
+        assert(!context.next(c));
+    })(CAllocator());
+
+    static foreach(s; ["", "abc", ".1234"])
+    {
+        arraySource(s).parse!((scope ref context) {
+            assert(!context.parseInt);
+        })(CAllocator());
+    }
+}
+
