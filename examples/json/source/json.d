@@ -16,6 +16,52 @@ import bcparser :
     parseZeroOrMore
 ;
 
+version(unittest)
+{
+    void assertMatch(alias P)(string source) @nogc nothrow @safe
+    {
+        import bcparser : arraySource, CAllocator, parse;
+        arraySource(source).parse!((scope ref context) {
+            assert(P(context));
+        })(CAllocator());
+    }
+
+    void assertMatchWithRest(alias P)(string source, string rest) @nogc nothrow @safe
+    {
+        import bcparser : arraySource, CAllocator, parse;
+        arraySource(source).parse!((scope ref context) {
+            assert(P(context));
+
+            char c;
+            foreach (expectedChar; rest)
+            {
+                assert(context.next(c) && c == expectedChar);
+            }
+
+            assert(!context.next(c));
+        })(CAllocator());
+    }
+
+    void assertMatchAll(alias P)(string source) @nogc nothrow @safe
+    {
+        import bcparser : arraySource, CAllocator, parse;
+        arraySource(source).parse!((scope ref context) {
+            assert(P(context));
+            
+            char c;
+            assert(!context.next(c));
+        })(CAllocator());
+    }
+
+    void assertUnmatch(alias P)(string source) @nogc nothrow @safe
+    {
+        import bcparser : arraySource, CAllocator, parse;
+        arraySource(source).parse!((scope ref context) {
+            assert(!P(context));
+        })(CAllocator());
+    }
+}
+
 /// Parse a white space.
 auto parseWhiteSpace(C)(scope ref C context) @nogc nothrow @safe
 {
@@ -25,18 +71,14 @@ auto parseWhiteSpace(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatch!parseWhiteSpace(" ");
+    assertMatch!parseWhiteSpace("\t");
+    assertMatch!parseWhiteSpace("\r");
+    assertMatch!parseWhiteSpace("\n");
 
-    arraySource(" \t\r\n.").parse!((scope ref context) {
-        assert(parseWhiteSpace(context));
-        assert(parseWhiteSpace(context));
-        assert(parseWhiteSpace(context));
-        assert(parseWhiteSpace(context));
-        assert(!parseWhiteSpace(context));
-
-        char c;
-        assert(context.next(c) && c == '.');
-    })(CAllocator());
+    assertUnmatch!parseWhiteSpace("");
+    assertUnmatch!parseWhiteSpace(".");
+    assertUnmatch!parseWhiteSpace("a");
 }
 
 /// Parse white spaces.
@@ -48,40 +90,38 @@ auto parseWhiteSpaces(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
-
-    arraySource(" \t\r\n.").parse!((scope ref context) {
-        assert(parseWhiteSpaces(context));
-
-        // any space not found but succeeded.
-        assert(parseWhiteSpaces(context));
-
-        char c;
-        assert(context.next(c) && c == '.');
-    })(CAllocator());
+    assertMatch!parseWhiteSpaces("");
+    assertMatch!parseWhiteSpaces(".");
+    assertMatch!parseWhiteSpaces("a");
+    assertMatch!parseWhiteSpaces("1");
+    assertMatch!parseWhiteSpaces(" ");
+    assertMatchAll!parseWhiteSpaces(" \t\r\n");
+    assertMatchWithRest!parseWhiteSpaces(" \t\r\n.", ".");
+    assertMatchWithRest!parseWhiteSpaces(". \t\r\n", ". \t\r\n");
 }
 
 /// Parse a structural characer with white spaces.
-private auto parseStructuralCharacter(char CH, C)(scope ref C context) @nogc nothrow @safe
+template parseStructuralCharacter(char CH)
 {
-    return context.parseSequence!(
-        parseWhiteSpaces,
-        (scope ref c) => c.parseChar(CH),
-        parseWhiteSpaces);
+    /// ditto.
+    auto parseStructuralCharacter(C)(scope ref C context) @nogc nothrow @safe
+    {
+        return context.parseSequence!(
+            parseWhiteSpaces,
+            (scope ref c) => c.parseChar(CH),
+            parseWhiteSpaces);
+    }
 }
 
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!(parseStructuralCharacter!'.')(".");
+    assertMatchAll!(parseStructuralCharacter!'.')("\t\r\n .\t\r\n ");
+    assertMatchWithRest!(parseStructuralCharacter!'.')("\t\r\n .\t\r\n .", ".");
 
-    arraySource(" \t\r\n.\t\r\n a").parse!((scope ref context) {
-        assert(context.parseStructuralCharacter!'.');
-        assert(context.parseStructuralCharacter!'a');
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!(parseStructuralCharacter!'.')("a");
+    assertUnmatch!(parseStructuralCharacter!'.')("\t\r\n a\t\r\n ");
 }
  
 /// Parse begin-array.
@@ -93,15 +133,12 @@ auto parseBeginArray(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseBeginArray("[");
+    assertMatchAll!parseBeginArray("\t\r\n [\t\r\n ");
+    assertMatchWithRest!parseBeginArray("\t\r\n [\t\r\n [", "[");
 
-    arraySource(" \t\r\n[\t\r\n ").parse!((scope ref context) {
-        assert(context.parseBeginArray);
-        assert(!context.parseBeginArray);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parseBeginArray("a");
+    assertUnmatch!parseBeginArray("\t\r\n a\t\r\n ");
 }
  
 /// Parse end-array.
@@ -113,15 +150,12 @@ auto parseEndArray(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseEndArray("]");
+    assertMatchAll!parseEndArray("\t\r\n ]\t\r\n ");
+    assertMatchWithRest!parseEndArray("\t\r\n ]\t\r\n ]", "]");
 
-    arraySource(" \t\r\n]\t\r\n ").parse!((scope ref context) {
-        assert(context.parseEndArray);
-        assert(!context.parseEndArray);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parseEndArray("[");
+    assertUnmatch!parseEndArray("\t\r\n [\t\r\n ");
 }
  
 /// Parse begin-object.
@@ -133,15 +167,12 @@ auto parseBeginObject(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseBeginObject("{");
+    assertMatchAll!parseBeginObject("\t\r\n {\t\r\n ");
+    assertMatchWithRest!parseBeginObject("\t\r\n {\t\r\n {", "{");
 
-    arraySource(" \t\r\n{\t\r\n ").parse!((scope ref context) {
-        assert(context.parseBeginObject);
-        assert(!context.parseBeginObject);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parseBeginObject("}");
+    assertUnmatch!parseBeginObject("\t\r\n }\t\r\n ");
 }
  
 /// Parse end-object.
@@ -153,15 +184,12 @@ auto parseEndObject(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseEndObject("}");
+    assertMatchAll!parseEndObject("\t\r\n }\t\r\n ");
+    assertMatchWithRest!parseEndObject("\t\r\n }\t\r\n }", "}");
 
-    arraySource(" \t\r\n}\t\r\n ").parse!((scope ref context) {
-        assert(context.parseEndObject);
-        assert(!context.parseEndObject);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parseEndObject("{");
+    assertUnmatch!parseEndObject("\t\r\n {\t\r\n ");
 }
  
 /// Parse name-separator.
@@ -173,15 +201,12 @@ auto parseNameSeparator(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseNameSeparator(":");
+    assertMatchAll!parseNameSeparator("\t\r\n :\t\r\n ");
+    assertMatchWithRest!parseNameSeparator("\t\r\n :\t\r\n :", ":");
 
-    arraySource(" \t\r\n:\t\r\n ").parse!((scope ref context) {
-        assert(context.parseNameSeparator);
-        assert(!context.parseNameSeparator);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parseNameSeparator(";");
+    assertUnmatch!parseNameSeparator("\t\r\n ;\t\r\n ");
 }
  
 /// Parse value-separator.
@@ -193,15 +218,12 @@ auto parseValueSeparator(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseValueSeparator(",");
+    assertMatchAll!parseValueSeparator("\t\r\n ,\t\r\n ");
+    assertMatchWithRest!parseValueSeparator("\t\r\n ,\t\r\n ,", ",");
 
-    arraySource(" \t\r\n,\t\r\n ").parse!((scope ref context) {
-        assert(context.parseValueSeparator);
-        assert(!context.parseValueSeparator);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parseValueSeparator(".");
+    assertUnmatch!parseValueSeparator("\t\r\n .\t\r\n ");
 }
 
 /// Parse false.
@@ -213,15 +235,12 @@ auto parseFalse(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseFalse("false");
+    assertMatchWithRest!parseFalse("falsefalse", "false");
 
-    arraySource("false").parse!((scope ref context) {
-        assert(context.parseFalse);
-        assert(!context.parseFalse);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parseFalse(" false");
+    assertUnmatch!parseFalse("fals");
+    assertUnmatch!parseFalse("");
 }
  
 /// Parse true.
@@ -233,15 +252,12 @@ auto parseTrue(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseTrue("true");
+    assertMatchWithRest!parseTrue("truetrue", "true");
 
-    arraySource("true").parse!((scope ref context) {
-        assert(context.parseTrue);
-        assert(!context.parseTrue);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parseTrue(" true");
+    assertUnmatch!parseTrue("tru");
+    assertUnmatch!parseTrue("");
 }
  
 /// Parse null.
@@ -253,15 +269,12 @@ auto parseNull(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseNull("null");
+    assertMatchWithRest!parseNull("nullnull", "null");
 
-    arraySource("null").parse!((scope ref context) {
-        assert(context.parseNull);
-        assert(!context.parseNull);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parseNull(" null");
+    assertUnmatch!parseNull("nul");
+    assertUnmatch!parseNull("");
 }
 
 /// Parse plus.
@@ -273,15 +286,12 @@ auto parsePlus(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parsePlus("+");
+    assertMatchWithRest!parsePlus("++", "+");
 
-    arraySource("+").parse!((scope ref context) {
-        assert(context.parsePlus);
-        assert(!context.parsePlus);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parsePlus(" +");
+    assertUnmatch!parsePlus("-");
+    assertUnmatch!parsePlus("");
 }
 
  
@@ -294,15 +304,12 @@ auto parseMinus(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseMinus("-");
+    assertMatchWithRest!parseMinus("--", "-");
 
-    arraySource("-").parse!((scope ref context) {
-        assert(context.parseMinus);
-        assert(!context.parseMinus);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parseMinus(" -");
+    assertUnmatch!parseMinus("+");
+    assertUnmatch!parseMinus("");
 }
 
 /// Parse zero.
@@ -314,15 +321,12 @@ auto parseZero(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseZero("0");
+    assertMatchWithRest!parseZero("00", "0");
 
-    arraySource("0").parse!((scope ref context) {
-        assert(context.parseZero);
-        assert(!context.parseZero);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parseZero(" 0");
+    assertUnmatch!parseZero("1");
+    assertUnmatch!parseZero("");
 }
 
 /// Parse decimal point.
@@ -334,15 +338,12 @@ auto parseDecimalPoint(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseDecimalPoint(".");
+    assertMatchWithRest!parseDecimalPoint("..", ".");
 
-    arraySource(".").parse!((scope ref context) {
-        assert(context.parseDecimalPoint);
-        assert(!context.parseDecimalPoint);
-
-        char c;
-        assert(!context.next(c));
-    })(CAllocator());
+    assertUnmatch!parseDecimalPoint(" .");
+    assertUnmatch!parseDecimalPoint(",");
+    assertUnmatch!parseDecimalPoint("");
 }
 
 /// Parse an exp character.
@@ -354,16 +355,15 @@ auto parseE(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseE("E");
+    assertMatchAll!parseE("e");
+    assertMatchWithRest!parseE("ee", "e");
+    assertMatchWithRest!parseE("EE", "E");
 
-    arraySource("eEf").parse!((scope ref context) {
-        assert(context.parseE);
-        assert(context.parseE);
-        assert(!context.parseE);
-
-        char c;
-        assert(context.next(c) && c == 'f');
-    })(CAllocator());
+    assertUnmatch!parseE(" E");
+    assertUnmatch!parseE(" e");
+    assertUnmatch!parseE("f");
+    assertUnmatch!parseE("");
 }
 
 /// Parse an digit.
@@ -375,24 +375,16 @@ auto parseDigit(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    enum DIGITS = "0123456789";
+    foreach (i; 0 .. DIGITS.length)
+    {
+        assertMatchAll!parseDigit(DIGITS[i .. i + 1]);
+    }
 
-    arraySource("0123456789.").parse!((scope ref context) {
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(context.parseDigit);
-        assert(!context.parseDigit);
+    assertMatchWithRest!parseDigit("1234", "234");
 
-        char c;
-        assert(context.next(c) && c == '.');
-    })(CAllocator());
+    assertUnmatch!parseDigit("a");
+    assertUnmatch!parseDigit("");
 }
 
 /// Parse an digit 1-9.
@@ -404,23 +396,17 @@ auto parseDigit19(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    enum DIGITS = "123456789";
+    foreach (i; 0 .. DIGITS.length)
+    {
+        assertMatchAll!parseDigit19(DIGITS[i .. i + 1]);
+    }
 
-    arraySource("1234567890").parse!((scope ref context) {
-        assert(context.parseDigit19);
-        assert(context.parseDigit19);
-        assert(context.parseDigit19);
-        assert(context.parseDigit19);
-        assert(context.parseDigit19);
-        assert(context.parseDigit19);
-        assert(context.parseDigit19);
-        assert(context.parseDigit19);
-        assert(context.parseDigit19);
-        assert(!context.parseDigit19);
+    assertMatchWithRest!parseDigit19("1234", "234");
 
-        char c;
-        assert(context.next(c) && c == '0');
-    })(CAllocator());
+    assertUnmatch!parseDigit19("0");
+    assertUnmatch!parseDigit19("a");
+    assertUnmatch!parseDigit19("");
 }
 
 /// parse exp.
@@ -435,39 +421,19 @@ auto parseExp(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    static foreach(s; ["e+0123", "E+123", "e-9870", "E-9870"])
+    {
+        assertMatchAll!parseExp(s);
+    }
 
-    arraySource("e+0123,E+123,e-9870,E-9870").parse!((scope ref context) {
-        char c;
-        assert(context.parseExp);
-        assert(context.next(c) && c == ',');
-        assert(context.parseExp);
-        assert(context.next(c) && c == ',');
-        assert(context.parseExp);
-        assert(context.next(c) && c == ',');
-        assert(context.parseExp);
-        assert(!context.parseExp);
-        assert(!context.next(c));
-    })(CAllocator());
-
-    arraySource("e0123,E123,e9870,E9870").parse!((scope ref context) {
-        char c;
-        assert(context.parseExp);
-        assert(context.next(c) && c == ',');
-        assert(context.parseExp);
-        assert(context.next(c) && c == ',');
-        assert(context.parseExp);
-        assert(context.next(c) && c == ',');
-        assert(context.parseExp);
-        assert(!context.parseExp);
-        assert(!context.next(c));
-    })(CAllocator());
+    static foreach(s; ["e0123", "E123", "e9870", "E9870"])
+    {
+        assertMatchAll!parseExp(s);
+    }
 
     static foreach(s; ["f1234", "1234", "+1234", "-1234"])
     {
-        arraySource(s).parse!((scope ref context) {
-            assert(!context.parseExp);
-        })(CAllocator());
+        assertUnmatch!parseExp(s);
     }
 }
 
@@ -482,27 +448,15 @@ auto parseFrac(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseFrac(".1234567890");
+    assertMatchAll!parseFrac(".01234567890");
+    assertMatchAll!parseFrac(".0000");
+    assertMatchAll!parseFrac(".0");
 
-    arraySource(".1234567890,.0123456789,.0000,.0").parse!((scope ref context) {
-        char c;
-        assert(context.parseFrac);
-        assert(context.next(c) && c == ',');
-        assert(context.parseFrac);
-        assert(context.next(c) && c == ',');
-        assert(context.parseFrac);
-        assert(context.next(c) && c == ',');
-        assert(context.parseFrac);
-        assert(!context.parseFrac);
-        assert(!context.next(c));
-    })(CAllocator());
-
-    static foreach(s; ["", "1234", "..1234", "."])
-    {
-        arraySource(s).parse!((scope ref context) {
-            assert(!context.parseFrac);
-        })(CAllocator());
-    }
+    assertUnmatch!parseFrac("");
+    assertUnmatch!parseFrac("1234");
+    assertUnmatch!parseFrac("..1234");
+    assertUnmatch!parseFrac(".");
 }
 
 /// parse an int.
@@ -516,27 +470,14 @@ auto parseInt(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseInt("0");
+    assertMatchAll!parseInt("1");
+    assertMatchAll!parseInt("123");
+    assertMatchAll!parseInt("1234567890");
 
-    arraySource("0,1,123,1234567890").parse!((scope ref context) {
-        char c;
-        assert(context.parseInt);
-        assert(context.next(c) && c == ',');
-        assert(context.parseInt);
-        assert(context.next(c) && c == ',');
-        assert(context.parseInt);
-        assert(context.next(c) && c == ',');
-        assert(context.parseInt);
-        assert(!context.parseInt);
-        assert(!context.next(c));
-    })(CAllocator());
-
-    static foreach(s; ["", "abc", ".1234"])
-    {
-        arraySource(s).parse!((scope ref context) {
-            assert(!context.parseInt);
-        })(CAllocator());
-    }
+    assertUnmatch!parseInt("");
+    assertUnmatch!parseInt("abc");
+    assertUnmatch!parseInt(".1234");
 }
 
 /// parse a number.
@@ -552,26 +493,46 @@ auto parseNumber(C)(scope ref C context) @nogc nothrow @safe
 ///
 @nogc nothrow @safe unittest
 {
-    import bcparser : arraySource, CAllocator, parse;
+    assertMatchAll!parseNumber("0");
+    assertMatchAll!parseNumber("-0");
+    assertMatchAll!parseNumber("1");
+    assertMatchAll!parseNumber("-1");
+    assertMatchAll!parseNumber("123");
+    assertMatchAll!parseNumber("-123");
+    assertMatchAll!parseNumber("1234567890");
+    assertMatchAll!parseNumber("-1234567890");
 
-    arraySource("0,1,123,1234567890").parse!((scope ref context) {
-        char c;
-        assert(context.parseNumber);
-        assert(context.next(c) && c == ',');
-        assert(context.parseNumber);
-        assert(context.next(c) && c == ',');
-        assert(context.parseNumber);
-        assert(context.next(c) && c == ',');
-        assert(context.parseNumber);
-        assert(!context.parseNumber);
-        assert(!context.next(c));
-    })(CAllocator());
+    assertMatchAll!parseNumber("1234567890.0");
+    assertMatchAll!parseNumber("1234567890.01234");
+    assertMatchAll!parseNumber("1234567890.91234567890");
 
-    static foreach(s; ["", "abc", ".1234"])
-    {
-        arraySource(s).parse!((scope ref context) {
-            assert(!context.parseNumber);
-        })(CAllocator());
-    }
+    assertMatchAll!parseNumber("-1234567890.0");
+    assertMatchAll!parseNumber("-1234567890.01234");
+    assertMatchAll!parseNumber("-1234567890.91234567890");
+
+    assertMatchAll!parseNumber("1234567890e+01234");
+    assertMatchAll!parseNumber("1234567890e-01234");
+    assertMatchAll!parseNumber("1234567890E+01234");
+    assertMatchAll!parseNumber("1234567890E-01234");
+
+    assertMatchAll!parseNumber("-1234567890e+01234");
+    assertMatchAll!parseNumber("-1234567890e-01234");
+    assertMatchAll!parseNumber("-1234567890E+01234");
+    assertMatchAll!parseNumber("-1234567890E-01234");
+
+    assertMatchAll!parseNumber("123.1234567890e+01234");
+    assertMatchAll!parseNumber("123.1234567890e-01234");
+    assertMatchAll!parseNumber("123.1234567890E+01234");
+    assertMatchAll!parseNumber("123.1234567890E-01234");
+
+    assertMatchAll!parseNumber("-123.1234567890e+01234");
+    assertMatchAll!parseNumber("-123.1234567890e-01234");
+    assertMatchAll!parseNumber("-123.1234567890E+01234");
+    assertMatchAll!parseNumber("-123.1234567890E-01234");
+
+    assertUnmatch!parseNumber("");
+    assertUnmatch!parseNumber("abc");
+    assertUnmatch!parseNumber(".1234");
+    assertUnmatch!parseNumber("+1234");
 }
 
