@@ -536,3 +536,32 @@ auto parseNumber(C)(scope ref C context) @nogc nothrow @safe
     assertUnmatch!parseNumber("+1234");
 }
 
+/// parse a quatation mark.
+auto parseQuotationMark(C)(scope ref C context) @nogc nothrow @safe
+{
+    return parseChar(context, '"');
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    assertMatch!parseQuotationMark("\"");
+    assertUnmatch!parseQuotationMark("\'");
+    assertUnmatch!parseQuotationMark("");
+}
+
+/// parse a escape.
+auto parseEscape(C)(scope ref C context) @nogc nothrow @safe
+{
+    return parseChar(context, '\\');
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    assertMatch!parseEscape("\\");
+    assertUnmatch!parseEscape("\"");
+    assertUnmatch!parseEscape("\'");
+    assertUnmatch!parseEscape("");
+}
+
