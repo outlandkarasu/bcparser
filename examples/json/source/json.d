@@ -627,3 +627,54 @@ auto parseHexDigit(C)(scope ref C context) @nogc nothrow @safe
     }
 }
 
+/// parse an escaped char.
+auto parseJsonEscapeChar(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseSequence!(
+            parseEscape,
+            parseChoice!(
+                (scope ref c) => c.parseSet("\"\\/bfnrt"),
+                parseSequence!(
+                    (scope ref c) => c.parseChar('u'),
+                    parseHexDigit,
+                    parseHexDigit,
+                    parseHexDigit,
+                    parseHexDigit)));
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    foreach (c; "\"\\/bfnrt")
+    {
+        char[2] source = ['\\', c];
+        assertMatch!parseJsonEscapeChar(source[]);
+    }
+
+    foreach (c; "0aA.,\'")
+    {
+        char[2] source = ['\\', c];
+        assertUnmatch!parseJsonEscapeChar(source[]);
+    }
+
+    assertMatch!parseJsonEscapeChar("\\u1234");
+    assertMatch!parseJsonEscapeChar("\\u0000");
+    assertMatch!parseJsonEscapeChar("\\uabcd");
+    assertMatch!parseJsonEscapeChar("\\uABCD");
+    assertMatch!parseJsonEscapeChar("\\uffff");
+    assertMatch!parseJsonEscapeChar("\\uFFFF");
+
+    assertUnmatch!parseJsonEscapeChar("\\u");
+    assertUnmatch!parseJsonEscapeChar("\\u1");
+    assertUnmatch!parseJsonEscapeChar("\\u12");
+    assertUnmatch!parseJsonEscapeChar("\\u123");
+    assertUnmatch!parseJsonEscapeChar("\\ua");
+    assertUnmatch!parseJsonEscapeChar("\\uab");
+    assertUnmatch!parseJsonEscapeChar("\\uabc");
+    assertUnmatch!parseJsonEscapeChar("\\uA");
+    assertUnmatch!parseJsonEscapeChar("\\uAB");
+    assertUnmatch!parseJsonEscapeChar("\\uABC");
+    assertUnmatch!parseJsonEscapeChar("\\U1234");
+    assertUnmatch!parseJsonEscapeChar("\\UFFFF");
+}
+
