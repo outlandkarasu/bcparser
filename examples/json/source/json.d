@@ -18,7 +18,7 @@ import bcparser :
 
 version(unittest)
 {
-    void assertMatch(alias P)(string source) @nogc nothrow @safe
+    void assertMatch(alias P)(scope const(char)[] source) @nogc nothrow @safe
     {
         import bcparser : arraySource, CAllocator, parse;
         arraySource(source).parse!((scope ref context) {
@@ -26,7 +26,9 @@ version(unittest)
         })(CAllocator());
     }
 
-    void assertMatchWithRest(alias P)(string source, string rest) @nogc nothrow @safe
+    void assertMatchWithRest(alias P)(
+            scope const(char)[] source,
+            scope const(char)[] rest) @nogc nothrow @safe
     {
         import bcparser : arraySource, CAllocator, parse;
         arraySource(source).parse!((scope ref context) {
@@ -42,7 +44,7 @@ version(unittest)
         })(CAllocator());
     }
 
-    void assertMatchAll(alias P)(string source) @nogc nothrow @safe
+    void assertMatchAll(alias P)(scope const(char)[] source) @nogc nothrow @safe
     {
         import bcparser : arraySource, CAllocator, parse;
         arraySource(source).parse!((scope ref context) {
@@ -53,7 +55,7 @@ version(unittest)
         })(CAllocator());
     }
 
-    void assertUnmatch(alias P)(string source) @nogc nothrow @safe
+    void assertUnmatch(alias P)(scope const(char)[] source) @nogc nothrow @safe
     {
         import bcparser : arraySource, CAllocator, parse;
         arraySource(source).parse!((scope ref context) {
@@ -563,5 +565,36 @@ auto parseEscape(C)(scope ref C context) @nogc nothrow @safe
     assertUnmatch!parseEscape("\"");
     assertUnmatch!parseEscape("\'");
     assertUnmatch!parseEscape("");
+}
+
+/// parse an unescaped character.
+auto parseUnescaped(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseChoice!(
+        (scope ref c) => c.parseRange('\x20', '\x21'),
+        (scope ref c) => c.parseRange('\x23', '\x5B'),
+        (scope ref c) => c.parseRange('\x5D', char.max));
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    for (char c = '\x00'; ; ++c)
+    {
+        char[1] source = [c];
+        if (c < '\x20' || c == '\x22' || c == '\x5C')
+        {
+            assertUnmatch!parseUnescaped(source[]);
+        }
+        else
+        {
+            assertMatch!parseUnescaped(source[]);
+        }
+
+        if (c == char.max)
+        {
+            break;
+        }
+    }
 }
 
