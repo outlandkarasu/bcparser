@@ -598,3 +598,32 @@ auto parseUnescaped(C)(scope ref C context) @nogc nothrow @safe
     }
 }
 
+/// parse a hexdecimal character.
+auto parseHexDigit(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseChoice!(
+            (scope ref c) => c.parseSet("0123456789ABCDEFabcdef"));
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    foreach (c; "01234567890")
+    {
+        char[1] source = [c];
+        assertMatch!parseHexDigit(source[]);
+    }
+
+    foreach (c; "ABCDEFabcdef")
+    {
+        char[1] source = [c];
+        assertMatch!parseHexDigit(source[]);
+    }
+
+    foreach (c; "Gg. \n\t")
+    {
+        char[1] source = [c];
+        assertUnmatch!parseHexDigit(source[]);
+    }
+}
+
