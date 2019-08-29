@@ -678,3 +678,21 @@ auto parseJsonEscapeChar(C)(scope ref C context) @nogc nothrow @safe
     assertUnmatch!parseJsonEscapeChar("\\UFFFF");
 }
 
+/// parse string literal char.
+auto parseJsonChar(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseChoice!(
+            parseUnescaped,
+            parseJsonEscapeChar);
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    assertMatch!parseJsonChar("a");
+    assertMatch!parseJsonChar("\\n");
+
+    assertUnmatch!parseJsonChar("\\d");
+    assertUnmatch!parseJsonChar("");
+}
+
