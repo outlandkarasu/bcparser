@@ -696,3 +696,33 @@ auto parseJsonChar(C)(scope ref C context) @nogc nothrow @safe
     assertUnmatch!parseJsonChar("");
 }
 
+/// parse string literal.
+auto parseJsonString(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseSequence!(
+            parseQuotationMark,
+            parseZeroOrMore!parseJsonChar,
+            parseQuotationMark);
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    assertMatch!parseJsonString(`""`);
+    assertMatch!parseJsonString(`"a"`);
+    assertMatch!parseJsonString(`"あ"`);
+    assertMatch!parseJsonString(`"\\"`);
+    assertMatch!parseJsonString(`"\n"`);
+
+    assertMatch!parseJsonString(`"abcde"`);
+    assertMatch!parseJsonString(`"あいうえお"`);
+    assertMatch!parseJsonString(`"\\\n\t\r\b\f\""`);
+
+    assertUnmatch!parseJsonString(`"`);
+    assertUnmatch!parseJsonString(`'`);
+    assertUnmatch!parseJsonString(`a`);
+    assertUnmatch!parseJsonString(`\`);
+    assertUnmatch!parseJsonString(`\n`);
+    assertUnmatch!parseJsonString(`"\"`);
+    assertUnmatch!parseJsonString(`"a`);
+}
