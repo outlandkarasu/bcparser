@@ -5,6 +5,7 @@ https://tools.ietf.org/html/rfc8259
 */
 module bcparser.examples.json; 
 import bcparser :
+    ParsingResult,
     parseChar,
     parseChoice,
     parseOption,
@@ -726,3 +727,65 @@ auto parseJsonString(C)(scope ref C context) @nogc nothrow @safe
     assertUnmatch!parseJsonString(`"\"`);
     assertUnmatch!parseJsonString(`"a`);
 }
+
+/// parse an array.
+ParsingResult parseArray(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseSequence!(
+            parseBeginArray,
+            parseOption!(
+                parseSequence!(
+                    parseValue,
+                    parseZeroOrMore!(
+                        parseSequence!(
+                            parseValueSeparator, parseValue)))),
+           parseEndArray);
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    assertMatch!parseArray("[]");
+    assertMatch!parseArray("  [  ]  ");
+
+    void assertMatchValue(string valueString)() @nogc nothrow @safe
+    {
+        assertMatch!parseArray("[" ~ valueString ~ "]");
+        assertMatch!parseArray("  [  " ~ valueString ~ "]  ");
+        assertMatch!parseArray("[" ~ valueString ~ "," ~ valueString ~ "]");
+        assertMatch!parseArray(
+            "  [  " ~ valueString ~ " , " ~ valueString ~ " , " ~ valueString ~ "  ]  ");
+    }
+
+    assertMatchValue!("false");
+    assertMatchValue!("true");
+    assertMatchValue!("null");
+    assertMatchValue!("0");
+    assertMatchValue!("0.0");
+    assertMatchValue!(`""`);
+    assertMatchValue!(`"abc"`);
+    assertMatchValue!(`"\b\f\n\r\t\uFFFF\""`);
+
+    assertUnmatch!parseArray("[");
+    assertUnmatch!parseArray("]");
+
+    void assertUnmatchValue(string valueString)() @nogc nothrow @safe
+    {
+        assertUnmatch!parseArray("[" ~ valueString ~ " " ~ valueString ~ "]");
+        assertUnmatch!parseArray("[" ~ valueString ~ ",]");
+        assertUnmatch!parseArray("[" ~ valueString ~ "," ~ valueString ~ ",]");
+    }
+}
+
+/// parse a value.
+auto parseValue(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseChoice!(
+            parseFalse,
+            parseNull,
+            parseTrue,
+            parseArray,
+            parseNumber,
+            parseJsonString);
+}
+
