@@ -71,12 +71,25 @@ Params:
 Returns:
     true if P is primitive parser.
 */
-enum bool isPrimitiveParser(alias P, C) =
-    (__traits(isTemplate, P) && is(typeof({ static assert(isPrimitiveParserFunction!(typeof(P!C))); })))
-    || isPrimitiveParserFunction!(typeof(P));
-
-/// ditto
-enum bool isPrimitiveParser(P, C) = isPrimitiveParserFunction!P;
+template isPrimitiveParser(alias P, C)
+{
+    static if (__traits(isTemplate, P) && isType!(P!C))
+    {
+        enum isPrimitiveParser = isPrimitiveParserFunction!(P!C);
+    }
+    else static if (!__traits(isTemplate, P) && isType!P)
+    {
+        enum isPrimitiveParser = isPrimitiveParserFunction!P;
+    }
+    else static if (__traits(isTemplate, P) && !isType!(P!C))
+    {
+        enum isPrimitiveParser = isPrimitiveParserFunction!(typeof(P!C));
+    }
+    else
+    {
+        enum isPrimitiveParser = isPrimitiveParserFunction!(typeof(P));
+    }
+}
 
 ///
 @nogc nothrow pure @safe unittest

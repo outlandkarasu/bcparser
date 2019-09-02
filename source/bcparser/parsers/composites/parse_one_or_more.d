@@ -25,8 +25,9 @@ template parseOneOrMore(alias P)
         true if matched one ore more times.
     */
     ParsingResult parseOneOrMore(C)(scope ref C context) @nogc nothrow @safe
-        if(isContext!C && isPrimitiveParser!(P, C))
     {
+        static assert(isContext!C && isPrimitiveParser!(P, C));
+
         ParsingResult headResult = P(context);
         if (!headResult)
         {

@@ -30,8 +30,9 @@ template parseZeroOrMore(alias P)
         true if no have error.
     */
     ParsingResult parseZeroOrMore(C)(scope ref C context) @nogc nothrow @safe
-        if(isContext!C && isPrimitiveParser!(P, C))
     {
+        static assert(isContext!C && isPrimitiveParser!(P, C));
+
         ParsingResult result;
         while ((result = P(context)).isMatch) {}
         return ParsingResult.match | result;

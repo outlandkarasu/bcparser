@@ -25,14 +25,16 @@ template parseChoice(P...)
         true if matched all parsers.
     */
     ParsingResult parseChoice(C)(scope ref C context) @nogc nothrow @safe
-        if(isContext!C && is(typeof(
+    {
+        static assert(isContext!C && is(typeof(
         {
             foreach (p; P)
             {
                 static assert(isPrimitiveParser!(p, C));
             }
-        })))
-    {
+        }
+        )));
+
         foreach(parser; P)
         {
             immutable result = parser(context);
