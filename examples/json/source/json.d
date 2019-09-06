@@ -2,8 +2,7 @@
 bcparser JSON parser example.
 
 https://tools.ietf.org/html/rfc8259
-*/
-module bcparser.examples.json; 
+*/ module bcparser.examples.json; 
 import bcparser :
     ParsingResult,
     parseChar,
@@ -728,6 +727,37 @@ auto parseJsonString(C)(scope ref C context) @nogc nothrow @safe
     assertUnmatch!parseJsonString(`"a`);
 }
 
+/// parse an object member.
+ParsingResult parseMember(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseSequence!(
+            parseJsonString,
+            parseNameSeparator,
+            parseValue!C);
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    assertMatch!parseMember(`"":0`);
+    assertMatch!parseMember(`"":""`);
+    assertMatch!parseMember(`"":[]`);
+    assertMatch!parseMember(`"":[""]`);
+    assertMatch!parseMember(`"":null`);
+    assertMatch!parseMember(`"":true`);
+    assertMatch!parseMember(`"":false`);
+    assertMatch!parseMember(`""  :  false  `);
+    assertMatch!parseMember(`"test":""`);
+
+    assertUnmatch!parseMember(`"":`);
+    assertUnmatch!parseMember(`:""`);
+    assertUnmatch!parseMember(`0:""`);
+    assertUnmatch!parseMember(`null:""`);
+    assertUnmatch!parseMember(`true:""`);
+    assertUnmatch!parseMember(`false:""`);
+    assertUnmatch!parseMember(`[]:""`);
+}
+
 /// parse an array.
 ParsingResult parseArray(C)(scope ref C context) @nogc nothrow @safe
 {
@@ -735,10 +765,10 @@ ParsingResult parseArray(C)(scope ref C context) @nogc nothrow @safe
             parseBeginArray,
             parseOption!(
                 parseSequence!(
-                    parseValue,
+                    parseValue!C,
                     parseZeroOrMore!(
                         parseSequence!(
-                            parseValueSeparator, parseValue)))),
+                            parseValueSeparator, parseValue!C)))),
            parseEndArray);
 }
 
@@ -766,6 +796,10 @@ ParsingResult parseArray(C)(scope ref C context) @nogc nothrow @safe
     assertMatchValue!(`"abc"`);
     assertMatchValue!(`"\b\f\n\r\t\uFFFF\""`);
 
+    assertMatch!parseArray("[[]]");
+    assertMatch!parseArray("[[],[],[]]");
+    assertMatch!parseArray(`[[1],["a"],[]]`);
+
     assertUnmatch!parseArray("[");
     assertUnmatch!parseArray("]");
 
@@ -778,7 +812,7 @@ ParsingResult parseArray(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse a value.
-auto parseValue(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseValue(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChoice!(
             parseFalse,
