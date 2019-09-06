@@ -65,7 +65,7 @@ version(unittest)
 }
 
 /// Parse a white space.
-auto parseWhiteSpace(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseWhiteSpace(C)(scope ref C context) @nogc nothrow @safe
 {
     return parseSet(context, "\x20\x09\x0a\x0d");
 }
@@ -84,7 +84,7 @@ auto parseWhiteSpace(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse white spaces.
-auto parseWhiteSpaces(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseWhiteSpaces(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseZeroOrMore!parseWhiteSpace;
 }
@@ -106,7 +106,7 @@ auto parseWhiteSpaces(C)(scope ref C context) @nogc nothrow @safe
 template parseStructuralCharacter(char CH)
 {
     /// ditto.
-    auto parseStructuralCharacter(C)(scope ref C context) @nogc nothrow @safe
+    ParsingResult parseStructuralCharacter(C)(scope ref C context) @nogc nothrow @safe
     {
         return context.parseSequence!(
             parseWhiteSpaces,
@@ -127,7 +127,7 @@ template parseStructuralCharacter(char CH)
 }
  
 /// Parse begin-array.
-auto parseBeginArray(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseBeginArray(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!'[';
 }
@@ -144,7 +144,7 @@ auto parseBeginArray(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse end-array.
-auto parseEndArray(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseEndArray(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!']';
 }
@@ -161,7 +161,7 @@ auto parseEndArray(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse begin-object.
-auto parseBeginObject(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseBeginObject(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!'{';
 }
@@ -178,7 +178,7 @@ auto parseBeginObject(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse end-object.
-auto parseEndObject(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseEndObject(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!'}';
 }
@@ -195,7 +195,7 @@ auto parseEndObject(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse name-separator.
-auto parseNameSeparator(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseNameSeparator(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!':';
 }
@@ -212,7 +212,7 @@ auto parseNameSeparator(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse value-separator.
-auto parseValueSeparator(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseValueSeparator(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseStructuralCharacter!',';
 }
@@ -229,7 +229,7 @@ auto parseValueSeparator(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse false.
-auto parseFalse(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseFalse(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseString("false");
 }
@@ -246,7 +246,7 @@ auto parseFalse(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse true.
-auto parseTrue(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseTrue(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseString("true");
 }
@@ -263,7 +263,7 @@ auto parseTrue(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse null.
-auto parseNull(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseNull(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseString("null");
 }
@@ -280,7 +280,7 @@ auto parseNull(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse plus.
-auto parsePlus(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parsePlus(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChar('+');
 }
@@ -298,7 +298,7 @@ auto parsePlus(C)(scope ref C context) @nogc nothrow @safe
 
  
 /// Parse minus.
-auto parseMinus(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseMinus(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChar('-');
 }
@@ -315,7 +315,7 @@ auto parseMinus(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse zero.
-auto parseZero(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseZero(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChar('0');
 }
@@ -332,7 +332,7 @@ auto parseZero(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse decimal point.
-auto parseDecimalPoint(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseDecimalPoint(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChar('.');
 }
@@ -349,7 +349,7 @@ auto parseDecimalPoint(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse an exp character.
-auto parseE(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseE(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseSet("eE");
 }
@@ -369,7 +369,7 @@ auto parseE(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse an digit.
-auto parseDigit(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseDigit(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseRange('0', '9');
 }
@@ -390,7 +390,7 @@ auto parseDigit(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse an digit 1-9.
-auto parseDigit19(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseDigit19(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseRange('1', '9');
 }
@@ -412,7 +412,7 @@ auto parseDigit19(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse exp.
-auto parseExp(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseExp(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseSequence!(
         parseE, 
@@ -440,7 +440,7 @@ auto parseExp(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse frac.
-auto parseFrac(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseFrac(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseSequence!(
         parseDecimalPoint, 
@@ -462,7 +462,7 @@ auto parseFrac(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse an int.
-auto parseInt(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseInt(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChoice!(
         parseZero,
@@ -483,7 +483,7 @@ auto parseInt(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse a number.
-auto parseNumber(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseNumber(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseSequence!(
         parseOption!parseMinus,
@@ -539,7 +539,7 @@ auto parseNumber(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse a quatation mark.
-auto parseQuotationMark(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseQuotationMark(C)(scope ref C context) @nogc nothrow @safe
 {
     return parseChar(context, '"');
 }
@@ -553,7 +553,7 @@ auto parseQuotationMark(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse a escape.
-auto parseEscape(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseEscape(C)(scope ref C context) @nogc nothrow @safe
 {
     return parseChar(context, '\\');
 }
@@ -568,7 +568,7 @@ auto parseEscape(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse an unescaped character.
-auto parseUnescaped(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseUnescaped(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChoice!(
         (scope ref c) => c.parseRange('\x20', '\x21'),
@@ -599,7 +599,7 @@ auto parseUnescaped(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse a hexdecimal character.
-auto parseHexDigit(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseHexDigit(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChoice!(
             (scope ref c) => c.parseSet("0123456789ABCDEFabcdef"));
@@ -628,7 +628,7 @@ auto parseHexDigit(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse an escaped char.
-auto parseJsonEscapeChar(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseJsonEscapeChar(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseSequence!(
             parseEscape,
@@ -679,7 +679,7 @@ auto parseJsonEscapeChar(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse string literal char.
-auto parseJsonChar(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseJsonChar(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChoice!(
             parseUnescaped,
@@ -697,7 +697,7 @@ auto parseJsonChar(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse string literal.
-auto parseJsonString(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseJsonString(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseSequence!(
             parseQuotationMark,
