@@ -5,8 +5,7 @@ https://tools.ietf.org/html/rfc8259
 */ module bcparser.examples.json; 
 import bcparser :
     ParsingResult,
-    parseChar,
-    parseChoice,
+    parseChar, parseChoice,
     parseOption,
     parseOneOrMore,
     parseRange,
@@ -758,6 +757,64 @@ ParsingResult parseMember(C)(scope ref C context) @nogc nothrow @safe
     assertUnmatch!parseMember(`[]:""`);
 }
 
+/// parse an object.
+ParsingResult parseObject(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseSequence!(
+            parseBeginObject,
+            parseOption!(
+                parseSequence!(
+                    parseMember,
+                    parseZeroOrMore!(
+                        parseSequence!(parseValueSeparator, parseMember)))),
+            parseEndObject);
+}
+
+///
+@nogc nothrow @safe unittest
+{
+    assertMatch!parseObject("{}");
+    assertMatch!parseObject("  {  }  ");
+
+    assertMatch!parseObject(`{"":0}`);
+    assertMatch!parseObject(`{"":0.0}`);
+    assertMatch!parseObject(`{"":0.0e15}`);
+    assertMatch!parseObject(`{"":null}`);
+    assertMatch!parseObject(`{"":true}`);
+    assertMatch!parseObject(`{"":false}`);
+    assertMatch!parseObject(`{"":""}`);
+    assertMatch!parseObject(`{"":[]}`);
+    assertMatch!parseObject(`{"":{}}`);
+    assertMatch!parseObject(`{"":[{}]}`);
+    assertMatch!parseObject(`{"":[{"":{}}]}`);
+    assertMatch!parseObject(`{"a":[{"b":{"c":[{},{},{},"",0,1,true,null]}}]}`);
+
+    assertMatch!parseObject(`{"a":0}`);
+    assertMatch!parseObject(`{"ab":0.0}`);
+    assertMatch!parseObject(`{"abc":0.0e15}`);
+    assertMatch!parseObject(`{"a":null}`);
+    assertMatch!parseObject(`{"ab":true}`);
+    assertMatch!parseObject(`{"abc":false}`);
+    assertMatch!parseObject(`{"ab":""}`);
+    assertMatch!parseObject(`{"":""}`);
+
+    assertMatch!parseObject(`{
+        "number": 0,
+        "true": true,
+        "false": false,
+        "s": "abc",
+        "array": [0, 1, 2, 3],
+        "object": { "a": 0, "b": ""}
+   }`);
+
+    assertUnmatch!parseObject("{");
+    assertUnmatch!parseObject(`{""`);
+    assertUnmatch!parseObject(`{"":`);
+    assertUnmatch!parseObject(`{"":0`);
+    assertUnmatch!parseObject(`{"":0,"abc":"",}`);
+    assertUnmatch!parseObject("}");
+}
+
 /// parse an array.
 ParsingResult parseArray(C)(scope ref C context) @nogc nothrow @safe
 {
@@ -765,10 +822,10 @@ ParsingResult parseArray(C)(scope ref C context) @nogc nothrow @safe
             parseBeginArray,
             parseOption!(
                 parseSequence!(
-                    parseValue!C,
+                    parseValue,
                     parseZeroOrMore!(
                         parseSequence!(
-                            parseValueSeparator, parseValue!C)))),
+                            parseValueSeparator, parseValue)))),
            parseEndArray);
 }
 
@@ -815,11 +872,12 @@ ParsingResult parseArray(C)(scope ref C context) @nogc nothrow @safe
 ParsingResult parseValue(C)(scope ref C context) @nogc nothrow @safe
 {
     return context.parseChoice!(
-            parseFalse,
-            parseNull,
-            parseTrue,
-            parseArray,
-            parseNumber,
-            parseJsonString);
+            parseFalse!C,
+            parseNull!C,
+            parseTrue!C,
+            parseObject!C,
+            parseArray!C,
+            parseNumber!C,
+            parseJsonString!C);
 }
 
