@@ -881,3 +881,9 @@ ParsingResult parseValue(C)(scope ref C context) @nogc nothrow @safe
             parseJsonString!C);
 }
 
+/// parse JSON.
+ParsingResult parseJson(C)(scope ref C context) @nogc nothrow @safe
+{
+    return context.parseValue;
+}
+
