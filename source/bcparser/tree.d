@@ -16,7 +16,7 @@ Returns:
 */
 enum bool isEventHandler(alias H, S) =
     isSource!S
-    && is(typeof((scope string name) @nogc nothrow @safe {
+    && is(typeof((scope string name) {
         auto start = SourcePositionType!S.init;
         auto end = SourcePositionType!S.init;
         size_t depth;
@@ -43,8 +43,7 @@ Params:
 Returns:
     true if succeeded.
 */
-bool walkEventTree(alias H, S, A)(
-        ref scope const(Context!(S, A)) context) @nogc nothrow @safe
+bool walkEventTree(alias H, S, A)(ref scope const(Context!(S, A)) context)
     if (isEventHandler!(H, S))
 {
     return walkEventArray!H(context.events);
@@ -131,7 +130,7 @@ Params:
 Returns:
     true if succeeded.
 */
-bool walkEventArray(alias H, S)(const(ParsingEvent!S)[] events) @nogc nothrow @safe if (isEventHandler!(H, S))
+bool walkEventArray(alias H, S)(const(ParsingEvent!S)[] events) if (isEventHandler!(H, S))
 {
     auto tempEvents = events;
     if (!walkEventArrayWithDepth!H(tempEvents, 0))
@@ -190,8 +189,7 @@ Returns:
     true if succeeded.
 */
 bool walkEventArrayWithDepth(alias H, S)(
-        scope ref const(ParsingEvent!S)[] events,
-        size_t depth) @nogc nothrow @safe
+        scope ref const(ParsingEvent!S)[] events, size_t depth)
     if (isEventHandler!(H, S))
 {
     for (; events.length > 0; events = events[1 .. $])
