@@ -12,27 +12,37 @@ parse using one or more parser.
 
 Params:
     P = inner parser.
-    C = context type.
-    source = parsing source.
-Returns:
-    true if matched one ore more times.
 */
-ParsingResult parseOneOrMore(alias P, C)(ref C context) @nogc nothrow @safe
-    if(isContext!C && isPrimitiveParser!(P, C))
+template parseOneOrMore(alias P)
 {
-    ParsingResult headResult = P(context);
-    if (!headResult)
-    {
-        return headResult;
-    }
+    /**
+    parse using one or more parser.
 
-    ParsingResult tailResult;
-    do
+    Params:
+        C = context type.
+        context = parsing context.
+    Returns:
+        true if matched one ore more times.
+    */
+    ParsingResult parseOneOrMore(C)(scope ref C context)
     {
-        tailResult = P(context);
+        static assert(isContext!C);
+        static assert(isPrimitiveParser!(P, C));
+
+        ParsingResult headResult = P(context);
+        if (!headResult)
+        {
+            return headResult;
+        }
+
+        ParsingResult tailResult;
+        do
+        {
+            tailResult = P(context);
+        }
+        while(tailResult);
+        return headResult | tailResult;
     }
-    while(tailResult);
-    return headResult | tailResult;
 }
 
 ///

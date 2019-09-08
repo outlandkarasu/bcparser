@@ -14,7 +14,19 @@
             {
                 "name": "bc",
                 "targetType": "executable",
-                "dflags": ["-betterC"]
+                "buildOptions": ["betterC"]
+            }
+        ],
+        "subPackages": [
+            {
+                "name": "examples-json",
+                "targetType": "library",
+                "sourcePaths": ["examples/json/source"],
+                "importPaths": ["examples/json/source"],
+                "dependencies": {
+                    "bcparser": "*"
+                }
             }
         ]
 }
+

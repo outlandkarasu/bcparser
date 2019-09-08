@@ -14,9 +14,11 @@ Params:
 Returns:
     match if source has expected char.
 */
-ParsingResult parseChar(C, CH)(scope ref C context, CH expected) @nogc nothrow @safe
-    if(isContext!C && is(CH == ContextElementType!C))
+ParsingResult parseChar(C, CH)(scope ref C context, CH expected)
 {
+    static assert(isContext!C);
+    static assert(is(CH == ContextElementType!C));
+
     return context.tryParse!({
         CH current;
         if (!context.next(current))

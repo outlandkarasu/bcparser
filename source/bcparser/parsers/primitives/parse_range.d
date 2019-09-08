@@ -15,9 +15,11 @@ Params:
 Returns:
     true if source has expected char in range.
 */
-ParsingResult parseRange(C, CH)(scope ref C context, CH l, CH h) @nogc nothrow @safe
-    if(isContext!C && is(CH == ContextElementType!C))
+ParsingResult parseRange(C, CH)(scope ref C context, CH l, CH h)
 {
+    static assert(isContext!C);
+    static assert(is(CH == ContextElementType!C));
+
     return context.tryParse!({
         CH c;
         return ParsingResult.of(context.next(c) && (l <= c && c <= h));

@@ -10,6 +10,7 @@ bcparser.dll
 bcparser.a
 bcparser.lib
 bcparser-test-*
+bcparser-examples-json-test-*
 *.exe
 *.o
 *.obj

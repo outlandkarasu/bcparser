@@ -12,20 +12,30 @@ parse using not parser.
 
 Params:
     P = inner parser.
-    C = context type.
-    source = parsing source.
-Returns:
-    true if unmatched.
 */
-ParsingResult parseNot(alias P, C)(ref C context) @nogc nothrow @safe
-    if(isContext!C && isPrimitiveParser!(P, C))
+template parseNot(alias P)
 {
-    ParsingResult result;
-    context.tryParse!({
-        result = P(context);
-        return ParsingResult.unmatch;
-    });
-    return result.hasError ?  result : ParsingResult.of(!result);
+    /**
+    parse using not parser.
+
+    Params:
+        C = context type.
+        context = parsing context.
+    Returns:
+        true if unmatched.
+    */
+    ParsingResult parseNot(C)(scope ref C context)
+    {
+        static assert(isContext!C);
+        static assert(isPrimitiveParser!(P, C));
+
+        ParsingResult result;
+        context.tryParse!({
+            result = P(context);
+            return ParsingResult.unmatch;
+        });
+        return result.hasError ?  result : ParsingResult.of(!result);
+    }
 }
 
 ///

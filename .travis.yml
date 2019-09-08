@@ -7,7 +7,8 @@ d:
 
 script:
   - dub test -b unittest-cov --compiler=${DC}
-  - dub run --config=bc --compiler=${DC}
+  - dub test :examples-json -b unittest-cov --compiler=${DC}
+  - dub run --config=bc --build=unittest --compiler=${DC}
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

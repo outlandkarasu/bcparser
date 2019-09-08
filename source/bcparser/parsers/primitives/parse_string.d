@@ -14,9 +14,11 @@ Params:
 Returns:
     true if source has expected string.
 */
-ParsingResult parseString(C, CH)(scope ref C context, scope const(CH)[] expected) @nogc nothrow @safe
-    if(isContext!C && is(CH == ContextElementType!C))
+ParsingResult parseString(C, CH)(scope ref C context, scope const(CH)[] expected)
 {
+    static assert(isContext!C);
+    static assert(is(CH == ContextElementType!C));
+
     return context.tryParse!({
         foreach (e; expected)
         {

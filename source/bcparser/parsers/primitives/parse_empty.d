@@ -12,8 +12,10 @@ Params:
 Returns:
     true if source is empty.
 */
-ParsingResult parseEmpty(C)(scope ref C context) @nogc nothrow @safe if(isContext!C)
+ParsingResult parseEmpty(C)(scope ref C context)
 {
+    static assert(isContext!C);
+
     ParsingResult result;
     context.tryParse!({
         ContextElementType!C c;

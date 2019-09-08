@@ -26,8 +26,10 @@ Parsing event.
 Params:
     S = source type.
 */
-struct ParsingEvent(S) if(isSource!S)
+struct ParsingEvent(S)
 {
+    static assert(isSource!S);
+
     /**
     Position type.
     */

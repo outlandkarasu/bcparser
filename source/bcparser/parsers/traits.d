@@ -4,7 +4,6 @@ parsers traits module.
 module bcparser.parsers.traits;
 
 import std.traits :
-    hasFunctionAttributes,
     isCallable,
     isType,
     Parameters,
@@ -24,11 +23,10 @@ Params:
 */
 enum bool isPrimitiveParserFunction(P) =
     isCallable!P
-    && is(typeof((ref Parameters!(P)[0] context) @nogc nothrow @safe
+    && is(typeof((ref Parameters!(P)[0] context)
         {
             static assert(is(ReturnType!P : ParsingResult));
             static assert(Parameters!(P).length == 1);
-            static assert(hasFunctionAttributes!(P, "@nogc", "nothrow", "@safe"));
             static assert(isContext!(Parameters!(P)[0]));
             static assert(ParameterStorageClassTuple!(P)[0] & ParameterStorageClass.ref_);
         }));
@@ -46,9 +44,15 @@ enum bool isPrimitiveParserFunction(P) =
     static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s, char c) => ParsingResult.match)));
     static assert(!isPrimitiveParserFunction!(typeof(() => ParsingResult.match)));
     static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) => true)));
-    static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) @system => ParsingResult.match)));
-    static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) => ParsingResult.createError(new string(5)))));
-    static assert(!isPrimitiveParserFunction!(typeof((ref Ctx s) { throw new Exception("error"); })));
+
+    static assert(isPrimitiveParserFunction!(typeof((ref Ctx s) @system => ParsingResult.match)));
+    static assert(isPrimitiveParserFunction!(typeof((ref Ctx s) => ParsingResult.createError(new string(5)))));
+
+    version (D_Exceptions)
+    {
+        static assert(isPrimitiveParserFunction!(typeof(
+            delegate ParsingResult(scope ref Ctx s) { throw new Exception("error"); })));
+    }
 
     // functions tests.
     ParsingResult parser(ref Ctx s) @nogc nothrow pure @safe { return ParsingResult.match; }
@@ -67,12 +71,25 @@ Params:
 Returns:
     true if P is primitive parser.
 */
-enum bool isPrimitiveParser(alias P, C) =
-    (__traits(isTemplate, P) && is(typeof({ static assert(isPrimitiveParserFunction!(typeof(P!C))); })))
-    || isPrimitiveParserFunction!(typeof(P));
-
-/// ditto
-enum bool isPrimitiveParser(P, C) = isPrimitiveParserFunction!P;
+template isPrimitiveParser(alias P, C)
+{
+    static if (__traits(isTemplate, P) && isType!(P!C))
+    {
+        enum isPrimitiveParser = isPrimitiveParserFunction!(P!C);
+    }
+    else static if (!__traits(isTemplate, P) && isType!P)
+    {
+        enum isPrimitiveParser = isPrimitiveParserFunction!P;
+    }
+    else static if (__traits(isTemplate, P) && !isType!(P!C))
+    {
+        enum isPrimitiveParser = isPrimitiveParserFunction!(typeof(P!C));
+    }
+    else
+    {
+        enum isPrimitiveParser = isPrimitiveParserFunction!(typeof(P));
+    }
+}
 
 ///
 @nogc nothrow pure @safe unittest

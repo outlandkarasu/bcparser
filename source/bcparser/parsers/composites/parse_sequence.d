@@ -24,15 +24,19 @@ template parseSequence(P...)
     Returns:
         true if matched all parsers.
     */
-    ParsingResult parseSequence(C)(ref C context) @nogc nothrow @safe
-        if(isContext!C && is(typeof(
+    ParsingResult parseSequence(C)(scope ref C context)
+    {
+        static assert(isContext!C);
+        static assert(is(typeof(
         {
             foreach (p; P)
             {
                 static assert(isPrimitiveParser!(p, C));
             }
-        })))
-    {
+        }
+        )));
+
+
         return context.tryParse!({
             foreach(parser; P)
             {
