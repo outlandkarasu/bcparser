@@ -15,6 +15,8 @@ import bcparser :
     parseZeroOrMore
 ;
 
+@nogc @safe nothrow:
+
 version(unittest)
 {
     void assertMatch(alias P)(scope const(char)[] source) @nogc nothrow @safe
@@ -64,7 +66,7 @@ version(unittest)
 }
 
 /// Parse a white space.
-ParsingResult parseWhiteSpace(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseWhiteSpace(C)(scope ref C context)
 {
     return parseSet(context, "\x20\x09\x0a\x0d");
 }
@@ -83,7 +85,7 @@ ParsingResult parseWhiteSpace(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse white spaces.
-ParsingResult parseWhiteSpaces(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseWhiteSpaces(C)(scope ref C context)
 {
     return context.parseZeroOrMore!parseWhiteSpace;
 }
@@ -105,7 +107,7 @@ ParsingResult parseWhiteSpaces(C)(scope ref C context) @nogc nothrow @safe
 template parseStructuralCharacter(char CH)
 {
     /// ditto.
-    ParsingResult parseStructuralCharacter(C)(scope ref C context) @nogc nothrow @safe
+    ParsingResult parseStructuralCharacter(C)(scope ref C context)
     {
         return context.parseSequence!(
             parseWhiteSpaces,
@@ -126,7 +128,7 @@ template parseStructuralCharacter(char CH)
 }
  
 /// Parse begin-array.
-ParsingResult parseBeginArray(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseBeginArray(C)(scope ref C context)
 {
     return context.parseStructuralCharacter!'[';
 }
@@ -143,7 +145,7 @@ ParsingResult parseBeginArray(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse end-array.
-ParsingResult parseEndArray(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseEndArray(C)(scope ref C context)
 {
     return context.parseStructuralCharacter!']';
 }
@@ -160,7 +162,7 @@ ParsingResult parseEndArray(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse begin-object.
-ParsingResult parseBeginObject(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseBeginObject(C)(scope ref C context)
 {
     return context.parseStructuralCharacter!'{';
 }
@@ -177,7 +179,7 @@ ParsingResult parseBeginObject(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse end-object.
-ParsingResult parseEndObject(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseEndObject(C)(scope ref C context)
 {
     return context.parseStructuralCharacter!'}';
 }
@@ -194,7 +196,7 @@ ParsingResult parseEndObject(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse name-separator.
-ParsingResult parseNameSeparator(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseNameSeparator(C)(scope ref C context)
 {
     return context.parseStructuralCharacter!':';
 }
@@ -211,7 +213,7 @@ ParsingResult parseNameSeparator(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse value-separator.
-ParsingResult parseValueSeparator(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseValueSeparator(C)(scope ref C context)
 {
     return context.parseStructuralCharacter!',';
 }
@@ -228,7 +230,7 @@ ParsingResult parseValueSeparator(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse false.
-ParsingResult parseFalse(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseFalse(C)(scope ref C context)
 {
     return context.parseString("false");
 }
@@ -245,7 +247,7 @@ ParsingResult parseFalse(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse true.
-ParsingResult parseTrue(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseTrue(C)(scope ref C context)
 {
     return context.parseString("true");
 }
@@ -262,7 +264,7 @@ ParsingResult parseTrue(C)(scope ref C context) @nogc nothrow @safe
 }
  
 /// Parse null.
-ParsingResult parseNull(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseNull(C)(scope ref C context)
 {
     return context.parseString("null");
 }
@@ -279,7 +281,7 @@ ParsingResult parseNull(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse plus.
-ParsingResult parsePlus(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parsePlus(C)(scope ref C context)
 {
     return context.parseChar('+');
 }
@@ -295,9 +297,8 @@ ParsingResult parsePlus(C)(scope ref C context) @nogc nothrow @safe
     assertUnmatch!parsePlus("");
 }
 
- 
 /// Parse minus.
-ParsingResult parseMinus(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseMinus(C)(scope ref C context)
 {
     return context.parseChar('-');
 }
@@ -314,7 +315,7 @@ ParsingResult parseMinus(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse zero.
-ParsingResult parseZero(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseZero(C)(scope ref C context)
 {
     return context.parseChar('0');
 }
@@ -331,7 +332,7 @@ ParsingResult parseZero(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse decimal point.
-ParsingResult parseDecimalPoint(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseDecimalPoint(C)(scope ref C context)
 {
     return context.parseChar('.');
 }
@@ -348,7 +349,7 @@ ParsingResult parseDecimalPoint(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse an exp character.
-ParsingResult parseE(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseE(C)(scope ref C context)
 {
     return context.parseSet("eE");
 }
@@ -368,7 +369,7 @@ ParsingResult parseE(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse an digit.
-ParsingResult parseDigit(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseDigit(C)(scope ref C context)
 {
     return context.parseRange('0', '9');
 }
@@ -389,7 +390,7 @@ ParsingResult parseDigit(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// Parse an digit 1-9.
-ParsingResult parseDigit19(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseDigit19(C)(scope ref C context)
 {
     return context.parseRange('1', '9');
 }
@@ -411,7 +412,7 @@ ParsingResult parseDigit19(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse exp.
-ParsingResult parseExp(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseExp(C)(scope ref C context)
 {
     return context.parseSequence!(
         parseE, 
@@ -439,7 +440,7 @@ ParsingResult parseExp(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse frac.
-ParsingResult parseFrac(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseFrac(C)(scope ref C context)
 {
     return context.parseSequence!(
         parseDecimalPoint, 
@@ -461,7 +462,7 @@ ParsingResult parseFrac(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse an int.
-ParsingResult parseInt(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseInt(C)(scope ref C context)
 {
     return context.parseChoice!(
         parseZero,
@@ -482,7 +483,7 @@ ParsingResult parseInt(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse a number.
-ParsingResult parseNumber(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseNumber(C)(scope ref C context)
 {
     return context.parseSequence!(
         parseOption!parseMinus,
@@ -538,7 +539,7 @@ ParsingResult parseNumber(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse a quatation mark.
-ParsingResult parseQuotationMark(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseQuotationMark(C)(scope ref C context)
 {
     return parseChar(context, '"');
 }
@@ -552,7 +553,7 @@ ParsingResult parseQuotationMark(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse a escape.
-ParsingResult parseEscape(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseEscape(C)(scope ref C context)
 {
     return parseChar(context, '\\');
 }
@@ -567,7 +568,7 @@ ParsingResult parseEscape(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse an unescaped character.
-ParsingResult parseUnescaped(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseUnescaped(C)(scope ref C context)
 {
     return context.parseChoice!(
         (scope ref c) => c.parseRange('\x20', '\x21'),
@@ -598,7 +599,7 @@ ParsingResult parseUnescaped(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse a hexdecimal character.
-ParsingResult parseHexDigit(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseHexDigit(C)(scope ref C context)
 {
     return context.parseChoice!(
             (scope ref c) => c.parseSet("0123456789ABCDEFabcdef"));
@@ -627,7 +628,7 @@ ParsingResult parseHexDigit(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse an escaped char.
-ParsingResult parseJsonEscapeChar(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseJsonEscapeChar(C)(scope ref C context)
 {
     return context.parseSequence!(
             parseEscape,
@@ -678,7 +679,7 @@ ParsingResult parseJsonEscapeChar(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse string literal char.
-ParsingResult parseJsonChar(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseJsonChar(C)(scope ref C context)
 {
     return context.parseChoice!(
             parseUnescaped,
@@ -696,7 +697,7 @@ ParsingResult parseJsonChar(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse string literal.
-ParsingResult parseJsonString(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseJsonString(C)(scope ref C context)
 {
     return context.parseSequence!(
             parseQuotationMark,
@@ -727,11 +728,11 @@ ParsingResult parseJsonString(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse an object member.
-ParsingResult parseMember(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseMember(C)(scope ref C context)
 {
     return context.parseSequence!(
-            parseJsonString,
-            parseNameSeparator,
+            parseJsonString!C,
+            parseNameSeparator!C,
             parseValue!C);
 }
 
@@ -758,7 +759,7 @@ ParsingResult parseMember(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse an object.
-ParsingResult parseObject(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseObject(C)(scope ref C context)
 {
     return context.parseSequence!(
             parseBeginObject,
@@ -816,7 +817,7 @@ ParsingResult parseObject(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse an array.
-ParsingResult parseArray(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseArray(C)(scope ref C context)
 {
     return context.parseSequence!(
             parseBeginArray,
@@ -835,7 +836,7 @@ ParsingResult parseArray(C)(scope ref C context) @nogc nothrow @safe
     assertMatch!parseArray("[]");
     assertMatch!parseArray("  [  ]  ");
 
-    void assertMatchValue(string valueString)() @nogc nothrow @safe
+    void assertMatchValue(string valueString)()
     {
         assertMatch!parseArray("[" ~ valueString ~ "]");
         assertMatch!parseArray("  [  " ~ valueString ~ "]  ");
@@ -860,7 +861,7 @@ ParsingResult parseArray(C)(scope ref C context) @nogc nothrow @safe
     assertUnmatch!parseArray("[");
     assertUnmatch!parseArray("]");
 
-    void assertUnmatchValue(string valueString)() @nogc nothrow @safe
+    void assertUnmatchValue(string valueString)()
     {
         assertUnmatch!parseArray("[" ~ valueString ~ " " ~ valueString ~ "]");
         assertUnmatch!parseArray("[" ~ valueString ~ ",]");
@@ -869,7 +870,7 @@ ParsingResult parseArray(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse a value.
-ParsingResult parseValue(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseValue(C)(scope ref C context)
 {
     return context.parseChoice!(
             parseFalse!C,
@@ -882,7 +883,7 @@ ParsingResult parseValue(C)(scope ref C context) @nogc nothrow @safe
 }
 
 /// parse JSON.
-ParsingResult parseJson(C)(scope ref C context) @nogc nothrow @safe
+ParsingResult parseJson(C)(scope ref C context)
 {
     return context.parseValue;
 }
