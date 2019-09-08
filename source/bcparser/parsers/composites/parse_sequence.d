@@ -24,9 +24,10 @@ template parseSequence(P...)
     Returns:
         true if matched all parsers.
     */
-    ParsingResult parseSequence(C)(scope ref C context) @nogc nothrow @safe
+    ParsingResult parseSequence(C)(scope ref C context)
     {
-        static assert(isContext!C && is(typeof(
+        static assert(isContext!C);
+        static assert(is(typeof(
         {
             foreach (p; P)
             {

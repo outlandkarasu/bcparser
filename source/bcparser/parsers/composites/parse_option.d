@@ -24,9 +24,10 @@ template parseOption(alias P)
     Returns:
         true if no have error.
     */
-    ParsingResult parseOption(C)(scope ref C context) @nogc nothrow @safe
+    ParsingResult parseOption(C)(scope ref C context)
     {
-        static assert(isContext!C && isPrimitiveParser!(P, C));
+        static assert(isContext!C);
+        static assert(isPrimitiveParser!(P, C));
 
         // discard result.
         auto result = P(context);

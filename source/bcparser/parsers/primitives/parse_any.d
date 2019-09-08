@@ -12,8 +12,10 @@ Params:
 Returns:
     match if source has any char.
 */
-ParsingResult parseAny(C)(scope ref C context) @nogc nothrow @safe if(isContext!C)
+ParsingResult parseAny(C)(scope ref C context)
 {
+    static assert(isContext!C);
+
     ContextElementType!C c;
     return context.next(c);
 }

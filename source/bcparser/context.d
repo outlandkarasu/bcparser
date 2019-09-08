@@ -21,8 +21,11 @@ Params:
     S = source type.
     A = allocator type.
 */
-struct Context(S, A) if(isSource!S && isAllocator!A)
+struct Context(S, A)
 {
+    static assert(isSource!S);
+    static assert(isAllocator!A);
+
     /// element type.
     alias Element = SourceElementType!S;
 
@@ -41,7 +44,7 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     */
     this()(
         auto scope return ref S source,
-        auto scope return ref A allocator) @nogc nothrow pure @safe
+        auto scope return ref A allocator)
     {
         this.source_ = source;
         this.allocator_ = allocator;
@@ -50,7 +53,7 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     /**
     release saved memory.
     */
-    ~this() @nogc nothrow @safe
+    ~this()
     {
         allocator_.release(events_);
     }
@@ -63,7 +66,7 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     Returns:
         match if succeeded.
     */
-    ParsingResult next(scope return out Element e) @nogc nothrow pure @safe
+    ParsingResult next(scope return out Element e)
     {
         if (hasError)
         {
@@ -86,7 +89,7 @@ struct Context(S, A) if(isSource!S && isAllocator!A)
     Returns:
         match if succeeded.
     */
-    ParsingResult addEvent(string name)() @nogc nothrow @safe
+    ParsingResult addEvent(string name)()
     {
         return addEvent!(name, EventType.single)();
     }
@@ -122,7 +125,7 @@ private:
     Returns:
         match if succeeded.
     */
-    ParsingResult addEvent(string name, EventType type)() @nogc nothrow @safe
+    ParsingResult addEvent(string name, EventType type)()
     {
         if (hasError)
         {
@@ -282,8 +285,8 @@ Params:
     allocator = target allocator.
 */
 void parse(alias F, S, A)(
-    auto scope ref S source,
-    auto scope ref A allocator) @nogc nothrow @safe
+        auto scope ref S source,
+        auto scope ref A allocator)
 {
     auto context = Context!(S, A)(source, allocator);
     F(context);
@@ -315,9 +318,11 @@ Params:
 Returns:
     match if succeeded.
 */
-ParsingResult tryParse(alias F, C)(ref C context) @nogc nothrow @safe
-    if(isContext!C && is(ReturnType!F : ParsingResult))
+ParsingResult tryParse(alias F, C)(ref C context)
 {
+    static assert(isContext!C);
+    static assert(is(ReturnType!F : ParsingResult));
+
     immutable position = context.source_.position;
     immutable eventsLength = context.events_.length;
     immutable result = F();
@@ -383,9 +388,11 @@ Params:
 Returns:
     match if succeeded.
 */
-ParsingResult tryParseNode(string name, alias F, C)(ref C context) @nogc nothrow @safe
-    if(isContext!C && is(ReturnType!F : ParsingResult))
+ParsingResult tryParseNode(string name, alias F, C)(ref C context)
 {
+    static assert(isContext!C);
+    static assert(is(ReturnType!F : ParsingResult));
+
     immutable position = context.source_.position;
     immutable eventsLength = context.events_.length;
 

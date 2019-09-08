@@ -24,9 +24,10 @@ template parseNot(alias P)
     Returns:
         true if unmatched.
     */
-    ParsingResult parseNot(C)(scope ref C context) @nogc nothrow @safe
+    ParsingResult parseNot(C)(scope ref C context)
     {
-        static assert(isContext!C && isPrimitiveParser!(P, C));
+        static assert(isContext!C);
+        static assert(isPrimitiveParser!(P, C));
 
         ParsingResult result;
         context.tryParse!({

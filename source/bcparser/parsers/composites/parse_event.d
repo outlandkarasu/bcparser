@@ -25,9 +25,10 @@ template parseEvent(string name, alias P)
     Returns:
         true if no have error.
     */
-    ParsingResult parseEvent(C)(scope ref C context) @nogc nothrow @safe
+    ParsingResult parseEvent(C)(scope ref C context)
     {
-        static assert(isContext!C && isPrimitiveParser!(P, C));
+        static assert(isContext!C);
+        static assert(isPrimitiveParser!(P, C));
 
         return context.tryParseNode!(name, () => P(context));
     }

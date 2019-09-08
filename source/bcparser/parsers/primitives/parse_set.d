@@ -14,9 +14,11 @@ Params:
 Returns:
     true if source has expected char in set.
 */
-ParsingResult parseSet(C, CH)(scope ref C context, scope const(CH)[] set) @nogc nothrow @safe
-    if(isContext!C && is(CH == ContextElementType!C))
+ParsingResult parseSet(C, CH)(scope ref C context, scope const(CH)[] set)
 {
+    static assert(isContext!C);
+    static assert(is(CH == ContextElementType!C));
+
     return context.tryParse!({
         CH c;
         if (!context.next(c))
