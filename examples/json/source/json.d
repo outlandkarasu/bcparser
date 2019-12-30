@@ -5,7 +5,9 @@ https://tools.ietf.org/html/rfc8259
 */ module bcparser.examples.json; 
 import bcparser :
     ParsingResult,
-    parseChar, parseChoice,
+    parseChar,
+    parseChoice,
+    parseEvent,
     parseOption,
     parseOneOrMore,
     parseRange,
@@ -63,6 +65,19 @@ version(unittest)
             assert(!P(context));
         })(CAllocator());
     }
+}
+
+/// JSON node type.
+enum JsonNode
+{
+    array = "array",
+    falseValue = "false",
+    member = "member",
+    nullValue = "null",
+    numberValue = "number",
+    object = "object",
+    stringValue = "string",
+    trueValue = "true",
 }
 
 /// Parse a white space.
@@ -232,7 +247,9 @@ ParsingResult parseValueSeparator(C)(scope ref C context)
 /// Parse false.
 ParsingResult parseFalse(C)(scope ref C context)
 {
-    return context.parseString("false");
+    return context.parseEvent!(
+            JsonNode.falseValue,
+            (scope ref c) => c.parseString("false"));
 }
 
 ///
@@ -249,7 +266,9 @@ ParsingResult parseFalse(C)(scope ref C context)
 /// Parse true.
 ParsingResult parseTrue(C)(scope ref C context)
 {
-    return context.parseString("true");
+    return context.parseEvent!(
+            JsonNode.trueValue,
+            (scope ref c) => c.parseString("true"));
 }
 
 ///
@@ -266,7 +285,9 @@ ParsingResult parseTrue(C)(scope ref C context)
 /// Parse null.
 ParsingResult parseNull(C)(scope ref C context)
 {
-    return context.parseString("null");
+    return context.parseEvent!(
+            JsonNode.nullValue,
+            (scope ref c) => c.parseString("null"));
 }
 
 ///
@@ -485,11 +506,13 @@ ParsingResult parseInt(C)(scope ref C context)
 /// parse a number.
 ParsingResult parseNumber(C)(scope ref C context)
 {
-    return context.parseSequence!(
-        parseOption!parseMinus,
-        parseInt,
-        parseOption!parseFrac,
-        parseOption!parseExp);
+    return context.parseEvent!(
+        JsonNode.numberValue,
+        parseSequence!(
+            parseOption!parseMinus,
+            parseInt,
+            parseOption!parseFrac,
+            parseOption!parseExp));
 }
 
 ///
@@ -699,10 +722,12 @@ ParsingResult parseJsonChar(C)(scope ref C context)
 /// parse string literal.
 ParsingResult parseJsonString(C)(scope ref C context)
 {
-    return context.parseSequence!(
-            parseQuotationMark,
-            parseZeroOrMore!parseJsonChar,
-            parseQuotationMark);
+    return context.parseEvent!(
+            JsonNode.stringValue,
+            parseSequence!(
+                parseQuotationMark,
+                parseZeroOrMore!parseJsonChar,
+                parseQuotationMark));
 }
 
 ///
@@ -730,10 +755,12 @@ ParsingResult parseJsonString(C)(scope ref C context)
 /// parse an object member.
 ParsingResult parseMember(C)(scope ref C context)
 {
-    return context.parseSequence!(
-            parseJsonString!C,
-            parseNameSeparator!C,
-            parseValue!C);
+    return context.parseEvent!(
+            JsonNode.member,
+            parseSequence!(
+                parseJsonString!C,
+                parseNameSeparator!C,
+                parseValue!C));
 }
 
 ///
@@ -761,14 +788,16 @@ ParsingResult parseMember(C)(scope ref C context)
 /// parse an object.
 ParsingResult parseObject(C)(scope ref C context)
 {
-    return context.parseSequence!(
-            parseBeginObject,
-            parseOption!(
-                parseSequence!(
-                    parseMember,
-                    parseZeroOrMore!(
-                        parseSequence!(parseValueSeparator, parseMember)))),
-            parseEndObject);
+    return context.parseEvent!(
+            JsonNode.object,
+            parseSequence!(
+                parseBeginObject,
+                parseOption!(
+                    parseSequence!(
+                        parseMember,
+                        parseZeroOrMore!(
+                            parseSequence!(parseValueSeparator, parseMember)))),
+                parseEndObject));
 }
 
 ///
@@ -819,15 +848,17 @@ ParsingResult parseObject(C)(scope ref C context)
 /// parse an array.
 ParsingResult parseArray(C)(scope ref C context)
 {
-    return context.parseSequence!(
-            parseBeginArray,
-            parseOption!(
-                parseSequence!(
-                    parseValue,
-                    parseZeroOrMore!(
-                        parseSequence!(
-                            parseValueSeparator, parseValue)))),
-           parseEndArray);
+    return context.parseEvent!(
+            JsonNode.array,
+            parseSequence!(
+                parseBeginArray,
+                parseOption!(
+                    parseSequence!(
+                        parseValue,
+                        parseZeroOrMore!(
+                            parseSequence!(
+                                parseValueSeparator, parseValue)))),
+               parseEndArray));
 }
 
 ///
