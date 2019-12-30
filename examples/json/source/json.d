@@ -2,7 +2,9 @@
 bcparser JSON parser example.
 
 https://tools.ietf.org/html/rfc8259
-*/ module bcparser.examples.json; 
+*/
+module bcparser.examples.json; 
+
 import bcparser :
     ParsingResult,
     parseChar,
